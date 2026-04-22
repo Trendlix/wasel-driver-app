@@ -1,4 +1,4 @@
-package com.trendlix.wasel_driver
+package com.trendlix.waselDriverApp
 
 import io.flutter.embedding.android.FlutterActivity
 

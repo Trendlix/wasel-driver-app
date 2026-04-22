@@ -8,7 +8,7 @@
 PRODUCT_NAME = wasel_driver
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.trendlix.waselDriver
+PRODUCT_BUNDLE_IDENTIFIER = com.trendlix.waselDriverApp
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.trendlix. All rights reserved.
