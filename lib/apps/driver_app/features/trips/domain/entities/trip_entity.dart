@@ -16,6 +16,8 @@ class TripEntity {
   final DateTime? date;
   final dynamic weight;
   final dynamic totalWeight;
+  final int? platformFees;
+  final int? amountGoesToDriver;
 
   TripEntity({
     required this.id,
@@ -35,6 +37,8 @@ class TripEntity {
     this.date,
     this.weight,
     this.totalWeight,
+    this.platformFees,
+    this.amountGoesToDriver,
   });
 }
 

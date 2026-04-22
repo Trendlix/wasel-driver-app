@@ -97,7 +97,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       const SizedBox(height: 16),
 
                       // ── Call Button ───────────────────────────────────
-                      _buildCallButton(),
+                      _buildCallButton(trip),
 
                       const SizedBox(height: 12),
 
@@ -725,28 +725,39 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   }
 
   // ── Call Button ──────────────────────────────────────────────────────────────
-  Widget _buildCallButton() {
-    return Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.phone_rounded, color: Colors.white, size: 18),
-          SizedBox(width: 8),
-          Text(
-            'Call',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+  Widget _buildCallButton(TripEntity trip) {
+    return InkWell(
+      onTap: () async {
+        final phone = trip.user.phone!.replaceAll(' ', '');
+        final Uri uri = Uri.parse('tel:$phone');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          debugPrint('Could not launch call for $phone');
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Call',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

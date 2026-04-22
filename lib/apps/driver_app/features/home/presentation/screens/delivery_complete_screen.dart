@@ -174,7 +174,7 @@ class DeliveryCompletedScreen extends StatelessWidget {
           const SizedBox(height: 6),
 
           Text(
-            'EGP ${tripSummary.earning}',
+            'EGP ${tripSummary.earning ?? 0}',
             style: const TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w900,
@@ -406,7 +406,7 @@ class DeliveryCompletedScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '${tripSummary.rating}',
+                      '${tripSummary.rating ?? 0}',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -465,7 +465,7 @@ class DeliveryCompletedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${tripSummary.totalKm}',
+                  '${tripSummary.totalKm ?? 0}',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,

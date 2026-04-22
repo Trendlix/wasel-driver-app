@@ -127,7 +127,7 @@ class AllTransactionsScreen extends StatelessWidget {
   }
 
   Widget _buildTransactionItem(TransactionEntity tx) {
-    final amountValue = double.tryParse(tx.amount ?? '0') ?? 0;
+    final amountValue = tx.amount ?? 0;
     final isPositive = amountValue > 0;
 
     final iconBgColor = isPositive

@@ -45,7 +45,7 @@ class WalletServiceLocator implements ServiceLocator {
     }
     // register cubit
     if (!sl.isRegistered<WalletCubit>()) {
-      sl.registerLazySingleton<WalletCubit>(() => WalletCubit(sl(), sl()));
+      sl.registerFactory<WalletCubit>(() => WalletCubit(sl(), sl()));
     }
   }
 }

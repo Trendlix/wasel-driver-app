@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_snackbar_widget.dart';
 import 'package:wasel_driver/apps/core/widgets/error_retry_widget.dart';
@@ -48,7 +49,10 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
         } else if (state.rejectRequestStatus == RequestStatus.success) {
           showSuccess(context, 'request rejected successfully');
           context.read<HomeCubit>().resetRejectRequestStatus();
-          Navigator.of(context).pop();
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRouteNames.mainShellScreen,
+            (route) => false,
+          );
         }
       },
       builder: (context, state) {

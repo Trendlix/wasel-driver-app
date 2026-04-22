@@ -19,6 +19,8 @@ class TripModel extends TripEntity {
     super.date,
     super.weight,
     super.totalWeight,
+    super.platformFees,
+    super.amountGoesToDriver,
   });
 
   factory TripModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,8 @@ class TripModel extends TripEntity {
       weight: json['weight'],
       totalWeight: json['total_weight'],
       date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      platformFees: json['platform_fees'],
+      amountGoesToDriver: json['amount_goes_to_driver'],
     );
   }
 }

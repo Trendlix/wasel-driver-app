@@ -53,17 +53,25 @@ class _SendQuoteBottomSheetState extends State<SendQuoteBottomSheet> {
   _PriceOption _selected = _PriceOption.recommended;
   final TextEditingController _customPriceController = TextEditingController();
   int _selectedChipIndex = 1; // 0 = below, 1 = wasel price, 2 = above
+  late HomeCubit _homeCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _homeCubit = serviceLocator<HomeCubit>();
+  }
 
   @override
   void dispose() {
     _customPriceController.dispose();
+    _homeCubit.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: serviceLocator<HomeCubit>(),
+      value: _homeCubit,
       child: BlocListener<HomeCubit, HomeStates>(
         listener: (context, state) {
           if (state.sendDriverOfferStatus == RequestStatus.error) {
@@ -129,7 +137,7 @@ class _SendQuoteBottomSheetState extends State<SendQuoteBottomSheet> {
                       iconColor: const Color(0xFFE8A020),
                       title: 'Recommended Price',
                       subtitle: 'Balanced price with higher win rate',
-                      price: '${widget.suggestedPrice} EGP',
+                      price: '${widget.suggestedPrice ?? 0} EGP',
                       priceColor: const Color(0xFFE8A020),
                       badge: 'BEST VALUE',
                       extraLabel: '+5% above minimum',
@@ -633,6 +641,10 @@ class _SendQuoteBottomSheetState extends State<SendQuoteBottomSheet> {
           flex: 2,
           child: InkWell(
             onTap: () {
+              if (_homeCubit.state.sendDriverOfferStatus ==
+                  RequestStatus.loading) {
+                return;
+              }
               final rawText = _customPriceController.text
                   .replaceAll('EGP', '') // remove currency label
                   .trim(); // remove whitespace
@@ -641,7 +653,7 @@ class _SendQuoteBottomSheetState extends State<SendQuoteBottomSheet> {
                 rawText,
               ).toInt(); // handle decimals safely
 
-              context.read<HomeCubit>().sendDriverOffer(
+              _homeCubit.sendDriverOffer(
                 widget.requestId,
                 price,
                 widget.locationLat,

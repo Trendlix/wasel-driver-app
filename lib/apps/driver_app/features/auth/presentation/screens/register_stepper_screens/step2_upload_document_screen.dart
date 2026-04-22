@@ -7,15 +7,42 @@ import 'package:wasel_driver/apps/driver_app/features/auth/presentation/cubit/re
 import 'package:wasel_driver/apps/driver_app/features/auth/presentation/cubit/register_stepper_states.dart';
 import 'package:wasel_driver/apps/driver_app/features/auth/presentation/widgets/file_picker_widget.dart';
 
-class Step2UploadDocumentsScreen extends StatelessWidget {
+class Step2UploadDocumentsScreen extends StatefulWidget {
   const Step2UploadDocumentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final cubit = context.read<RegistrationCubit>();
+  State<Step2UploadDocumentsScreen> createState() =>
+      _Step2UploadDocumentsScreenState();
+}
 
+class _Step2UploadDocumentsScreenState
+    extends State<Step2UploadDocumentsScreen> {
+  late TextEditingController _nationalIdExpiryController;
+  late TextEditingController _licenseExpiryController;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<RegistrationCubit>().state;
+    _nationalIdExpiryController = TextEditingController(
+      text: state.nationalIdExpiry,
+    );
+    _licenseExpiryController = TextEditingController(text: state.licenseExpiry);
+  }
+
+  @override
+  void dispose() {
+    _nationalIdExpiryController.dispose();
+    _licenseExpiryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return BlocBuilder<RegistrationCubit, RegistrationState>(
       builder: (context, state) {
+        final cubit = context.read<RegistrationCubit>();
+
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -42,6 +69,16 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
                 selectedFileName: state.nationalIdFront,
                 onFilePicked: cubit.updateNationalIdFront,
               ),
+              if (state.showErrors &&
+                  (state.nationalIdFront == null ||
+                      state.nationalIdFront!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'National ID Front is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -51,6 +88,16 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
                 selectedFileName: state.nationalIdBack,
                 onFilePicked: cubit.updateNationalIdBack,
               ),
+              if (state.showErrors &&
+                  (state.nationalIdBack == null ||
+                      state.nationalIdBack!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'National ID Back is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -58,10 +105,21 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
               _buildFieldLabel('National ID Expiry Date', isRequired: true),
               const SizedBox(height: 8),
               CustomTextField(
-                hint: '',
+                hint: 'YYYY-MM-DD',
+                controller: _nationalIdExpiryController,
                 inputType: TextInputType.datetime,
                 onChanged: cubit.updateNationalIdExpiry,
               ),
+              if (state.showErrors &&
+                  (state.nationalIdExpiry == null ||
+                      state.nationalIdExpiry!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'Expiry date is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -71,6 +129,16 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
                 selectedFileName: state.driverLicenseFront,
                 onFilePicked: cubit.updateDriverLicenseFront,
               ),
+              if (state.showErrors &&
+                  (state.driverLicenseFront == null ||
+                      state.driverLicenseFront!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'Driver License Front is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -80,6 +148,16 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
                 selectedFileName: state.driverLicenseBack,
                 onFilePicked: cubit.updateDriverLicenseBack,
               ),
+              if (state.showErrors &&
+                  (state.driverLicenseBack == null ||
+                      state.driverLicenseBack!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'Driver License Back is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -87,10 +165,20 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
               _buildFieldLabel('License Expiry Date', isRequired: true),
               const SizedBox(height: 8),
               CustomTextField(
-                hint: '',
+                hint: 'YYYY-MM-DD',
+                controller: _licenseExpiryController,
                 inputType: TextInputType.datetime,
                 onChanged: cubit.updateLicenseExpiry,
               ),
+              if (state.showErrors &&
+                  (state.licenseExpiry == null || state.licenseExpiry!.isEmpty))
+                const Padding(
+                  padding: EdgeInsets.only(top: 8, left: 4),
+                  child: Text(
+                    'License expiry date is required',
+                    style: TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
 
               const SizedBox(height: 16),
 
@@ -116,7 +204,37 @@ class Step2UploadDocumentsScreen extends StatelessWidget {
 
               // ── Continue Button ────────────────────────────────────
               CustomTextButtomWidget(
-                onClick: cubit.nextStep,
+                onClick: () {
+                  final bool isNationalIdFrontValid =
+                      state.nationalIdFront != null &&
+                      state.nationalIdFront!.isNotEmpty;
+                  final bool isNationalIdBackValid =
+                      state.nationalIdBack != null &&
+                      state.nationalIdBack!.isNotEmpty;
+                  final bool isNationalIdExpiryValid =
+                      state.nationalIdExpiry != null &&
+                      state.nationalIdExpiry!.isNotEmpty;
+                  final bool isDriverLicenseFrontValid =
+                      state.driverLicenseFront != null &&
+                      state.driverLicenseFront!.isNotEmpty;
+                  final bool isDriverLicenseBackValid =
+                      state.driverLicenseBack != null &&
+                      state.driverLicenseBack!.isNotEmpty;
+                  final bool isLicenseExpiryValid =
+                      state.licenseExpiry != null &&
+                      state.licenseExpiry!.isNotEmpty;
+
+                  if (isNationalIdFrontValid &&
+                      isNationalIdBackValid &&
+                      isNationalIdExpiryValid &&
+                      isDriverLicenseFrontValid &&
+                      isDriverLicenseBackValid &&
+                      isLicenseExpiryValid) {
+                    cubit.nextStep();
+                  } else {
+                    cubit.setShowErrors(true);
+                  }
+                },
                 btnTitle: 'Continue  >',
                 btnTitleSize: 16,
                 btnTitleColor: Colors.white,

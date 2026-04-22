@@ -250,7 +250,7 @@ class ActiveTripScreen extends StatelessWidget {
   Widget _buildArrivedButton(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamed(
           context,
           isPickedUp
               ? AppRouteNames.confirmDeliveryScreen
@@ -594,9 +594,21 @@ class ActiveTripScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _buildGoodsRow(
-            'Payment',
-            '${trip.price} ${trip.currency}',
-            const Color(0xFF1A3A6B),
+            'Total Price',
+            trip.price.toString().isNotEmpty ? trip.price.toString() : 'N/A',
+            AppColors.primary,
+          ),
+          const SizedBox(height: 10),
+          _buildGoodsRow(
+            'Wasel %',
+            '${trip.platformFees ?? 0} ${trip.currency}',
+            null,
+          ),
+          const SizedBox(height: 10),
+          _buildGoodsRow(
+            'Your Earnings',
+            '${trip.amountGoesToDriver ?? 0} ${trip.currency}',
+            AppColors.greenColor,
           ),
         ],
       ),
@@ -607,10 +619,7 @@ class ActiveTripScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-        ),
+        Text(label, style: const TextStyle(fontSize: 13, color: Colors.black)),
         Text(
           value,
           style: TextStyle(

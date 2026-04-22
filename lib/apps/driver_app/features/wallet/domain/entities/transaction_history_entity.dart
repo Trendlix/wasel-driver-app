@@ -8,7 +8,7 @@ class TransactionHistoryEntity {
 class TransactionEntity {
   final int? id;
   final int? walletId;
-  final String? amount;
+  final int? amount;
   final String? type;
   final String? reference;
   final String? description;

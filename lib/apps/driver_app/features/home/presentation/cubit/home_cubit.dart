@@ -34,6 +34,7 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getDriverProfile() async {
     emit(state.copyWith(getDriverProfileRequestStatus: RequestStatus.loading));
     final res = await _getDriverProfileUsecase!.call();
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(
@@ -53,6 +54,7 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getDriverSummary() async {
     emit(state.copyWith(driverSummaryRequestStatus: RequestStatus.loading));
     final res = await _getDriverSummaryUsecase!.call();
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(
@@ -72,6 +74,7 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getDriverRequests(double driverLat, double driverLong) async {
     emit(state.copyWith(driverRequestsRequestStatus: RequestStatus.loading));
     final res = await _getDriverRequestsUsecase!.call(driverLat, driverLong);
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(
@@ -95,6 +98,7 @@ class HomeCubit extends Cubit<HomeStates> {
   ) async {
     emit(state.copyWith(rejectRequestStatus: RequestStatus.loading));
     final res = await _rejectDriverRequestUsecase!.call(requestId);
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(
@@ -104,7 +108,7 @@ class HomeCubit extends Cubit<HomeStates> {
       ),
       (r) {
         emit(state.copyWith(rejectRequestStatus: RequestStatus.success));
-        getDriverRequests(driverLat, driverLong);
+        //getDriverRequests(driverLat, driverLong);
       },
     );
   }
@@ -122,6 +126,7 @@ class HomeCubit extends Cubit<HomeStates> {
       locationLat,
       locationLong,
     );
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(
@@ -136,6 +141,7 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getSingleRequest(int requestId, double lat, double long) async {
     emit(state.copyWith(getSingleRequestStatus: RequestStatus.loading));
     final res = await _getSingleRequestUsecase!.call(requestId, lat, long);
+    if (isClosed) return;
     res.fold(
       (l) => emit(
         state.copyWith(

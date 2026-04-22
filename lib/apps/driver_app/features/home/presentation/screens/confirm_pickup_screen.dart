@@ -60,6 +60,7 @@ class _ConfirmPickupScreenState extends State<ConfirmPickupScreen> {
           previous.confirmPickupStatus != current.confirmPickupStatus,
       listener: (context, state) {
         if (state.confirmPickupStatus == RequestStatus.success) {
+          context.read<DriverTripCubit>().getDriverTripById(widget.trip.id);
           PickupConfirmedBottomSheet.show(context, widget.trip);
         } else if (state.confirmPickupStatus == RequestStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -13,9 +13,17 @@ import 'package:wasel_driver/apps/driver_app/features/auth/presentation/cubit/dr
 import 'package:wasel_driver/apps/driver_app/features/auth/presentation/cubit/register_stepper_cubit.dart';
 import 'package:wasel_driver/apps/driver_app/features/auth/presentation/cubit/register_stepper_states.dart';
 
-class Step5ReviewConfirmScreen extends StatelessWidget {
+class Step5ReviewConfirmScreen extends StatefulWidget {
   final String tempToken;
   const Step5ReviewConfirmScreen({super.key, required this.tempToken});
+
+  @override
+  State<Step5ReviewConfirmScreen> createState() =>
+      _Step5ReviewConfirmScreenState();
+}
+
+class _Step5ReviewConfirmScreenState extends State<Step5ReviewConfirmScreen> {
+  bool _isTermsAgreed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +70,10 @@ class Step5ReviewConfirmScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // ── Terms Checkbox ─────────────────────────────────────
-                _TermsCheckbox(),
+                _TermsCheckbox(
+                  value: _isTermsAgreed,
+                  onChanged: (v) => setState(() => _isTermsAgreed = v),
+                ),
 
                 const SizedBox(height: 16),
 
@@ -76,6 +87,18 @@ class Step5ReviewConfirmScreen extends StatelessWidget {
                   builder: (context, driverState) {
                     return CustomTextButtomWidget(
                       onClick: () {
+                        if (!_isTermsAgreed) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please agree to the Terms and Conditions',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
                         final model = RegisterDriverModel(
                           fullName: state.fullName,
                           nationalIdExpiry:
@@ -99,14 +122,18 @@ class Step5ReviewConfirmScreen extends StatelessWidget {
                         );
                         context.read<DriverAuthCubit>().registerDriver(
                           model,
-                          tempToken,
+                          widget.tempToken,
                         );
                       },
                       btnTitle: 'Submit Registration  >',
                       btnTitleSize: 16,
                       btnTitleColor: Colors.white,
-                      buttonColor: AppColors.primary,
-                      borderColor: AppColors.primary,
+                      buttonColor: _isTermsAgreed
+                          ? AppColors.primary
+                          : const Color(0xFFE5E7EB),
+                      borderColor: _isTermsAgreed
+                          ? AppColors.primary
+                          : const Color(0xFFE5E7EB),
                       borderRaduisSize: 14,
                       borderWidth: 0,
                       isLoading:
@@ -278,13 +305,11 @@ class Step5ReviewConfirmScreen extends StatelessWidget {
 
 // ── Terms Checkbox ────────────────────────────────────────────────────────────
 
-class _TermsCheckbox extends StatefulWidget {
-  @override
-  State<_TermsCheckbox> createState() => _TermsCheckboxState();
-}
+class _TermsCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
-class _TermsCheckboxState extends State<_TermsCheckbox> {
-  bool _checked = false;
+  const _TermsCheckbox({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -292,8 +317,8 @@ class _TermsCheckboxState extends State<_TermsCheckbox> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Checkbox(
-          value: _checked,
-          onChanged: (v) => setState(() => _checked = v ?? false),
+          value: value,
+          onChanged: (v) => onChanged(v ?? false),
           activeColor: const Color(0xFF1A3A6B),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),

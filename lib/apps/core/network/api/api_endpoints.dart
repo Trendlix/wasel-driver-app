@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://api.wasel-fleet.com/api/driver';
+  static const String baseUrl = 'http://16.171.45.88:3000/';
 
   // api pathes
   static const String registerPath = 'auth/signup';
@@ -13,8 +13,6 @@ class ApiEndpoints {
   static const String getAddressesPath = 'address';
   static const String getAddressesType = 'addres/types';
   static const String addVoucherPath = 'vouchers/add';
-  static const String getWalletTransactionsPath =
-      'wallet/my-wallet-transactions';
   static const String getUserWalletPath = 'wallet/my-wallet';
   static const String getInboxPath = 'driver/inbox/full-structured';
   static const String submitTicketPath = 'ticket/request';

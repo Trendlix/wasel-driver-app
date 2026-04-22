@@ -184,9 +184,6 @@ class AppNavigatorManager {
                   create: (context) => serviceLocator<WalletCubit>(),
                 ),
                 BlocProvider(
-                  create: (context) => serviceLocator<ProfileCubit>(),
-                ),
-                BlocProvider(
                   create: (context) => serviceLocator<NotificationCubit>(),
                 ),
               ],

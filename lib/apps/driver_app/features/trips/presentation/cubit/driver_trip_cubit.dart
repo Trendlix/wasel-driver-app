@@ -25,6 +25,7 @@ class DriverTripCubit extends Cubit<DriverTripStates> {
   Future<void> getDriverTrips() async {
     emit(state.copyWith(getDriverTripsStatus: RequestStatus.loading));
     final result = await _getDriverTripsUsecase();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copyWith(
@@ -41,6 +42,7 @@ class DriverTripCubit extends Cubit<DriverTripStates> {
   Future<void> getDriverTripById(int id) async {
     emit(state.copyWith(getDriverTripByIdStatus: RequestStatus.loading));
     final result = await _getDriverTripByIdUsecase(id);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copyWith(
@@ -57,6 +59,7 @@ class DriverTripCubit extends Cubit<DriverTripStates> {
   Future<void> cancelDriverTrip(int id) async {
     emit(state.copyWith(cancelDriverTripStatus: RequestStatus.loading));
     final result = await _cancelDriverTripUsecase(id);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copyWith(
@@ -72,6 +75,7 @@ class DriverTripCubit extends Cubit<DriverTripStates> {
   Future<void> confirmPickup(int tripId, String otp) async {
     emit(state.copyWith(confirmPickupStatus: RequestStatus.loading));
     final result = await _confirmTripPickUpUsecase(tripId, otp);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copyWith(
@@ -88,6 +92,7 @@ class DriverTripCubit extends Cubit<DriverTripStates> {
   Future<void> confirmDelivery(int tripId, String otp, String image) async {
     emit(state.copyWith(confirmDeliveryStatus: RequestStatus.loading));
     final result = await _confirmTripDevliveryUsecase(tripId, otp, image);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copyWith(

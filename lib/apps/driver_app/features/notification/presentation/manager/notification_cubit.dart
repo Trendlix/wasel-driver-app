@@ -16,6 +16,7 @@ class NotificationCubit extends Cubit<NotificationStates> {
   Future<void> getNotifications() async {
     emit(state.copyWith(getNotificationsRequestStatus: RequestStatus.loading));
     final result = await _getNotificationsUsecase();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -46,6 +47,7 @@ class NotificationCubit extends Cubit<NotificationStates> {
       ),
     );
     final result = await _markAllNotificationUsecase();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(
         state.copyWith(

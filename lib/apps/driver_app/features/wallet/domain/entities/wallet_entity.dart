@@ -5,6 +5,8 @@ class WalletEntity {
   final String currency;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final double? earened;
+  final double? pedingAmount;
 
   WalletEntity({
     required this.id,
@@ -13,5 +15,7 @@ class WalletEntity {
     required this.currency,
     required this.createdAt,
     required this.updatedAt,
+    required this.earened,
+    required this.pedingAmount,
   });
 }

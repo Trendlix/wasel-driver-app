@@ -11,10 +11,10 @@ class Step4UploadPhotosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<RegistrationCubit>();
-
     return BlocBuilder<RegistrationCubit, RegistrationState>(
       builder: (context, state) {
+        final cubit = context.read<RegistrationCubit>();
+
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -46,6 +46,16 @@ class Step4UploadPhotosScreen extends StatelessWidget {
                     selectedFileName: state.profilePhoto,
                     onFilePicked: cubit.updateProfilePhoto,
                   ),
+                  if (state.showErrors &&
+                      (state.profilePhoto == null ||
+                          state.profilePhoto!.isEmpty))
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8, left: 4),
+                      child: Text(
+                        'Profile photo is required',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
 
                   const SizedBox(height: 16),
 
@@ -55,6 +65,15 @@ class Step4UploadPhotosScreen extends StatelessWidget {
                     selectedFileName: state.truckPhoto,
                     onFilePicked: cubit.updateTruckPhoto,
                   ),
+                  if (state.showErrors &&
+                      (state.truckPhoto == null || state.truckPhoto!.isEmpty))
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8, left: 4),
+                      child: Text(
+                        'Truck photo is required',
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
 
                   const SizedBox(height: 16),
 
@@ -67,7 +86,20 @@ class Step4UploadPhotosScreen extends StatelessWidget {
 
                   // ── Continue Button ──────────────────────────────────
                   CustomTextButtomWidget(
-                    onClick: cubit.nextStep,
+                    onClick: () {
+                      final bool isProfilePhotoValid =
+                          state.profilePhoto != null &&
+                          state.profilePhoto!.isNotEmpty;
+                      final bool isTruckPhotoValid =
+                          state.truckPhoto != null &&
+                          state.truckPhoto!.isNotEmpty;
+
+                      if (isProfilePhotoValid && isTruckPhotoValid) {
+                        cubit.nextStep();
+                      } else {
+                        cubit.setShowErrors(true);
+                      }
+                    },
                     btnTitle: 'Continue  >',
                     btnTitleSize: 16,
                     btnTitleColor: Colors.white,

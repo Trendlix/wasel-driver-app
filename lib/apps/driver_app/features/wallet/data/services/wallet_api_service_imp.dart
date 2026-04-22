@@ -22,7 +22,7 @@ class WalletApiServiceImpl implements WalletApiService {
         return Left('No token found');
       }
       final response = await _apiClient.get(
-        ApiEndpoints.getWalletTransactionsPath,
+        ApiEndpoints.driverWalletTransactionsPath,
         queryParameters: {'sort': 'created_at', 'sort_order': 'desc'},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );

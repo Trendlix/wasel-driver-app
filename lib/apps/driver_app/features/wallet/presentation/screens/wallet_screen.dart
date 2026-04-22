@@ -57,7 +57,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         const SizedBox(height: 16),
 
                         // ── Pending + Total Earned ───────────────────────
-                        _buildStatsRow(),
+                        _buildStatsRow(state),
 
                         const SizedBox(height: 20),
 
@@ -243,7 +243,11 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   // ── Stats Row ────────────────────────────────────────────────────────────────
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(WalletStates state) {
+    final pending = state.walletInfo?.pedingAmount?.toStringAsFixed(0) ?? '0';
+    final totalEarned = state.walletInfo?.earened?.toStringAsFixed(0) ?? '0';
+    final currency = state.walletInfo?.currency ?? 'EGP';
+
     return Row(
       children: [
         Expanded(
@@ -278,9 +282,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'EGP 150',
-                  style: TextStyle(
+                Text(
+                  '$currency $pending',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFFE8A020),
@@ -323,9 +327,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'EGP 15,420',
-                  style: TextStyle(
+                Text(
+                  '$currency $totalEarned',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF22C55E),
@@ -500,7 +504,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Column(
       children: recentTransactions.map((tx) {
-        final isPositive = double.parse(tx.amount ?? '0') > 0;
+        final isPositive = tx.amount! > 0;
         final iconWidget = isPositive
             ? const RotatedBox(
                 quarterTurns: 1,
@@ -534,8 +538,7 @@ class _WalletScreenState extends State<WalletScreen> {
           iconWidget: iconWidget,
           title: title,
           date: _formatDate(tx.createdAt ?? DateTime.now()),
-          amount:
-              '$amountPrefix EGP ${double.parse(tx.amount ?? '0').abs().toStringAsFixed(0)}',
+          amount: '$amountPrefix EGP ${tx.amount!.abs().toStringAsFixed(0)}',
           amountColor: amountColor,
           status: null,
         );

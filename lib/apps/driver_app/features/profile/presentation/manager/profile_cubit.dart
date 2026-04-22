@@ -56,6 +56,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> logout() async {
     emit(state.copywith(logoutStatus: RequestStatus.loading));
     final result = await _logoutUsecase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -70,6 +71,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> getProfile() async {
     emit(state.copywith(userProfileStatus: RequestStatus.loading));
     final result = await _getProfileUsercase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -89,6 +91,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> updateUserProfile(ProfileEntity profileModel) async {
     emit(state.copywith(updateUserProfileStatus: RequestStatus.loading));
     final result = await _updateUserInfoUsecase.call(profileModel);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -111,6 +114,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> getUserAddresses() async {
     emit(state.copywith(getUserAddressesStatus: RequestStatus.loading));
     final result = await _getUserAddressesUsecase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -130,6 +134,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> addAddress(AddressEntity address) async {
     emit(state.copywith(addAddressStatus: RequestStatus.loading));
     final result = await _addAddressUsecase.call(address);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -150,6 +155,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
       ),
     );
     final result = await _deleteUserAddressUsecase.call(addressId);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -171,6 +177,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> updateAddress(AddressEntity address) async {
     emit(state.copywith(updateAddressStatus: RequestStatus.loading));
     final result = await _updateUserAddressUsercase.call(address);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -192,6 +199,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
       oldPassword,
       newPassword,
     );
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -207,6 +215,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> getDriverBasicInfo() async {
     emit(state.copywith(getDriverBasicInfoStatus: RequestStatus.loading));
     final result = await _getDriverBasicInfoUsercase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -226,6 +235,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> getDriverLegalInfo() async {
     emit(state.copywith(getDriverLegalInfoStatus: RequestStatus.loading));
     final result = await _getDriverLegelInfoUsecase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -245,6 +255,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> updateDriverBasicInfo(DriverBasicInfoEntity model) async {
     emit(state.copywith(updateDriverBasicInfoStatus: RequestStatus.loading));
     final result = await _updateDriverBasicInfoUsecase.call(model);
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -266,6 +277,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> getDriverDocuments() async {
     emit(state.copywith(getDriverDocumentsStatus: RequestStatus.loading));
     final result = await _getDriverDocumentsUsecase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -293,6 +305,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
       type: type,
       expiryDate: expiryDate,
     );
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -318,6 +331,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
       file,
       expiryDate,
     );
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(
@@ -335,6 +349,7 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> deleteDriverAccount() async {
     emit(state.copywith(deleteDriverAccountStatus: RequestStatus.loading));
     final result = await _deleteDriverAccountUsecase.call();
+    if (isClosed) return;
     result.fold(
       (l) => emit(
         state.copywith(

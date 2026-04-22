@@ -16,6 +16,7 @@ class WalletCubit extends Cubit<WalletStates> {
   Future<void> getTransactionsHistory() async {
     emit(state.copyWith(walletTransactionsStatus: RequestStatus.loading));
     final result = await _getTransactionsHistoryUsecase();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -35,6 +36,7 @@ class WalletCubit extends Cubit<WalletStates> {
   Future<void> getWalletInfo() async {
     emit(state.copyWith(walletInfoStatus: RequestStatus.loading));
     final result = await _getDriverWalletInfoUsecase();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(
         state.copyWith(

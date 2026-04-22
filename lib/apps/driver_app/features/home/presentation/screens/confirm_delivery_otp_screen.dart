@@ -77,9 +77,9 @@ class _ConfirmDeliveryOtpScreenState extends State<ConfirmDeliveryOtpScreen> {
             previous.confirmDeliveryStatus != current.confirmDeliveryStatus,
         listener: (context, state) {
           if (state.confirmDeliveryStatus == RequestStatus.success) {
-            Navigator.pushReplacementNamed(
-              context,
+            Navigator.of(context).pushNamedAndRemoveUntil(
               AppRouteNames.confirmDeliverySuccessScreen,
+              ModalRoute.withName(AppRouteNames.mainShellScreen),
               arguments: state.tripSummaries,
             );
           } else if (state.confirmDeliveryStatus == RequestStatus.error) {

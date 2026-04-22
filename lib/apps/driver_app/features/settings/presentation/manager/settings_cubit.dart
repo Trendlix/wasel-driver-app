@@ -30,6 +30,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
   Future<void> submitTicket(TicketEntity ticket) async {
     emit(state.copyWith(submitTicketRequestStatus: RequestStatus.loading));
     final result = await _submitTicketUsecase.submitTicket(ticket);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -51,6 +52,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
       state.copyWith(getUserPreferencesRequestStatus: RequestStatus.loading),
     );
     final result = await _getUserPreferencesUsecase.call();
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -74,6 +76,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
       state.copyWith(updateUserPreferencesRequestStatus: RequestStatus.loading),
     );
     final result = await _updateUserPreferencesUsecase.call(userPreferences);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -97,6 +100,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
       state.copyWith(getTicketCategoriesRequestStatus: RequestStatus.loading),
     );
     final result = await _getTicketCategoryUsecase.call();
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -116,6 +120,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
   Future<void> getTermsCondition() async {
     emit(state.copyWith(getTermsConditionRequestStatus: RequestStatus.loading));
     final result = await _getTermsConditionUsecase.call();
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -135,6 +140,7 @@ class SettingsCubit extends Cubit<SettingsStates> {
   Future<void> getFaqs() async {
     emit(state.copyWith(getFaqsRequestStatus: RequestStatus.loading));
     final result = await _getFaqsUsecase.call();
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(

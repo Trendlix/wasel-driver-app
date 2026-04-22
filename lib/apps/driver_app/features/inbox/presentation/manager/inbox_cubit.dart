@@ -26,6 +26,7 @@ class InboxCubit extends Cubit<InboxStates> {
   Future<void> getOffersInbox(InboxStatus status) async {
     emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
     final result = await _getOffersInboxUsecase(status);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -45,6 +46,7 @@ class InboxCubit extends Cubit<InboxStates> {
   Future<void> getUpdatesInbox(InboxStatus status) async {
     emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
     final result = await _getUpdatesInboxUsecase(status);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -64,6 +66,7 @@ class InboxCubit extends Cubit<InboxStates> {
   Future<void> getSupportInbox(InboxStatus status) async {
     emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
     final result = await _getSupportInboxUsecase(status);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -88,6 +91,7 @@ class InboxCubit extends Cubit<InboxStates> {
       ),
     );
     final result = await _initateChatUsecase(ticketId, userId);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -109,6 +113,7 @@ class InboxCubit extends Cubit<InboxStates> {
   Future<void> getChatMessages(int conversationId) async {
     emit(state.copyWith(getChatMessagesRequestStatus: RequestStatus.loading));
     final result = await _getChatMessagesUsecase(conversationId);
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -143,6 +148,7 @@ class InboxCubit extends Cubit<InboxStates> {
       message,
       senderType,
     );
+    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(

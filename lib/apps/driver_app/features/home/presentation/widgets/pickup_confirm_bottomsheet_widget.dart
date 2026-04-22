@@ -19,6 +19,9 @@ class PickupConfirmedBottomSheet extends StatelessWidget {
     dropOff: trip.dropOff,
     typeOfGoods: trip.typeOfGoods,
     estimatedTime: trip.estimatedTime,
+    weight: trip.weight,
+    distanceBetween: trip.distanceBetween,
+    date: trip.date,
   );
   static void show(BuildContext context, TripEntity trip) {
     showModalBottomSheet(
@@ -45,7 +48,9 @@ class PickupConfirmedBottomSheet extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => Navigator.of(context).popUntil(
+                ModalRoute.withName(AppRouteNames.navigateToPickupScreen),
+              ),
               child: Container(
                 width: 32,
                 height: 32,
@@ -187,11 +192,13 @@ class PickupConfirmedBottomSheet extends StatelessWidget {
 
           // ── Start Delivery Button ──────────────────────────────
           GestureDetector(
-            onTap: () => Navigator.pushReplacementNamed(
-              context,
-              AppRouteNames.navigateToPickupScreen,
-              arguments: updatedTrip,
-            ),
+            onTap: () {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRouteNames.navigateToPickupScreen,
+                ModalRoute.withName(AppRouteNames.mainShellScreen),
+                arguments: updatedTrip,
+              );
+            },
             child: Container(
               width: double.infinity,
               height: 52,

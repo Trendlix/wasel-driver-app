@@ -8,6 +8,8 @@ class WalletModel extends WalletEntity {
     required super.currency,
     required super.createdAt,
     required super.updatedAt,
+    required super.earened,
+    required super.pedingAmount,
   });
 
   factory WalletModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,8 @@ class WalletModel extends WalletEntity {
       currency: json['currency'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+      earened: (json['total_earned'] as num?)?.toDouble(),
+      pedingAmount: (json['pending_amount'] as num?)?.toDouble(),
     );
   }
 
