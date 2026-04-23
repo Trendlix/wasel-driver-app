@@ -328,10 +328,55 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   } else if (state.getDriverProfileRequestStatus ==
                       RequestStatus.error) {
-                    return ErrorRetryWidget(
-                      message: state.errorMessage ?? '',
-                      onRetry: () =>
-                          context.read<HomeCubit>().getDriverProfile(),
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Welcome back,',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                state.errorMessage ?? 'Error loading profile',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () =>
+                              context.read<HomeCubit>().getDriverProfile(),
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'Retry',
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   } else if (state.getDriverProfileRequestStatus ==
                       RequestStatus.success) {
