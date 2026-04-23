@@ -140,9 +140,10 @@ class TicketSuccessScreen extends StatelessWidget {
                       height: 56,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pushReplacementNamed(AppRouteNames.inboxScreen);
+                          Navigator.of(context).pushReplacementNamed(
+                            AppRouteNames.inboxScreen,
+                            arguments: true,
+                          );
                         },
                         icon: const Icon(
                           Icons.all_inbox_outlined,

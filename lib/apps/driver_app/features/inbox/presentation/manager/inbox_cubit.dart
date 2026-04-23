@@ -4,6 +4,7 @@ import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_chat_messages_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_inbox_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/initate_chat_usecase.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/mark_inbox_item_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/send_message_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/presentation/manager/inbox_states.dart';
 
@@ -14,6 +15,7 @@ class InboxCubit extends Cubit<InboxStates> {
   final InitateChatUsecase _initateChatUsecase;
   final GetChatMessagesUsecase _getChatMessagesUsecase;
   final SendMessageUsecase _sendMessageUsecase;
+  final MarkInboxItemUsecase _markInboxItemUsecase;
   InboxCubit(
     this._getOffersInboxUsecase,
     this._getUpdatesInboxUsecase,
@@ -21,6 +23,7 @@ class InboxCubit extends Cubit<InboxStates> {
     this._initateChatUsecase,
     this._getChatMessagesUsecase,
     this._sendMessageUsecase,
+    this._markInboxItemUsecase,
   ) : super(const InboxStates());
 
   Future<void> getOffersInbox(InboxStatus status) async {
@@ -83,11 +86,18 @@ class InboxCubit extends Cubit<InboxStates> {
     );
   }
 
-  Future<void> initiateChat(int ticketId, int userId) async {
+  Future<void> initiateChat(
+    int ticketId,
+    int userId,
+    ChatAction action,
+    int? inboxItemId,
+  ) async {
     emit(
       state.copyWith(
         initiateChatRequestStatus: RequestStatus.loading,
         ticketId: ticketId,
+        loadingInboxId: inboxItemId,
+        chatAction: action,
       ),
     );
     final result = await _initateChatUsecase(ticketId, userId);
@@ -97,14 +107,18 @@ class InboxCubit extends Cubit<InboxStates> {
         state.copyWith(
           initiateChatRequestStatus: RequestStatus.error,
           initiateChatErrorMessage: error,
-          ticketId: null,
+          ticketId: -1,
+          loadingInboxId: -1,
+          chatAction: null,
         ),
       ),
       (ticketStatusEntity) => emit(
         state.copyWith(
           initiateChatRequestStatus: RequestStatus.success,
           ticketStatusEntity: ticketStatusEntity,
-          ticketId: null,
+          ticketId: -1,
+          loadingInboxId: -1,
+          chatAction: null,
         ),
       ),
     );
@@ -170,7 +184,36 @@ class InboxCubit extends Cubit<InboxStates> {
     );
   }
 
+  Future<void> markInboxItem(String inboxItemId, bool isSupport) async {
+    emit(state.copyWith(markInboxItemRequestStatus: RequestStatus.loading));
+    final result = await _markInboxItemUsecase(inboxItemId, isSupport);
+    if (isClosed) return;
+    result.fold(
+      (error) => emit(
+        state.copyWith(
+          markInboxItemRequestStatus: RequestStatus.error,
+          markInboxItemErrorMessage: error,
+        ),
+      ),
+      (isMarked) => emit(
+        state.copyWith(
+          markInboxItemRequestStatus: RequestStatus.success,
+          markInboxItemErrorMessage: null,
+        ),
+      ),
+    );
+  }
+
+  void resetMarkInboxItemStatus() {
+    emit(state.copyWith(markInboxItemRequestStatus: RequestStatus.initial));
+  }
+
   void resetInitiateChatStatus() {
-    emit(state.copyWith(initiateChatRequestStatus: RequestStatus.initial));
+    emit(state.copyWith(
+      initiateChatRequestStatus: RequestStatus.initial,
+      ticketId: -1,
+      loadingInboxId: -1,
+      chatAction: null,
+    ));
   }
 }

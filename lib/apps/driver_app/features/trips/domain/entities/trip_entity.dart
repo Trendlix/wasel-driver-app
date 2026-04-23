@@ -16,8 +16,8 @@ class TripEntity {
   final DateTime? date;
   final dynamic weight;
   final dynamic totalWeight;
-  final int? platformFees;
-  final int? amountGoesToDriver;
+  final dynamic platformFees;
+  final dynamic amountGoesToDriver;
 
   TripEntity({
     required this.id,

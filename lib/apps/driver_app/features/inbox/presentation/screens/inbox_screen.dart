@@ -25,7 +25,7 @@ class InboxScreen extends StatefulWidget {
 class _InboxScreenState extends State<InboxScreen> {
   int selectedTabIndex = 0;
   final Color primaryBlue = AppColors.primary;
-  String? ticketId;
+  int ticketNumber = 0;
 
   @override
   void initState() {
@@ -37,11 +37,11 @@ class _InboxScreenState extends State<InboxScreen> {
     });
   }
 
-  void _fetchCurrentTab(int index) {
+  Future<void> _fetchCurrentTab(int index) async {
     final cubit = context.read<InboxCubit>();
-    if (index == 0) cubit.getOffersInbox(InboxStatus.offers);
-    if (index == 1) cubit.getSupportInbox(InboxStatus.support);
-    if (index == 2) cubit.getUpdatesInbox(InboxStatus.updates);
+    if (index == 0) await cubit.getOffersInbox(InboxStatus.offers);
+    if (index == 1) await cubit.getSupportInbox(InboxStatus.support);
+    if (index == 2) await cubit.getUpdatesInbox(InboxStatus.updates);
   }
 
   void _onTabTapped(int index) {
@@ -114,7 +114,7 @@ class _InboxScreenState extends State<InboxScreen> {
               AppRouteNames.chatScreen,
               arguments: {
                 'ticket': state.ticketStatusEntity,
-                'ticketId': ticketId,
+                'ticketId': ticketNumber.toString(),
               },
             );
             context.read<InboxCubit>().resetInitiateChatStatus();
@@ -123,6 +123,17 @@ class _InboxScreenState extends State<InboxScreen> {
               context,
               state.initiateChatErrorMessage ?? "something went wrong",
             );
+          }
+
+          if (state.markInboxItemRequestStatus == RequestStatus.success) {
+            _fetchCurrentTab(selectedTabIndex);
+            context.read<InboxCubit>().resetMarkInboxItemStatus();
+          } else if (state.markInboxItemRequestStatus == RequestStatus.error) {
+            showError(
+              context,
+              state.markInboxItemErrorMessage ?? "something went wrong",
+            );
+            context.read<InboxCubit>().resetMarkInboxItemStatus();
           }
         },
         builder: (context, state) {
@@ -147,22 +158,41 @@ class _InboxScreenState extends State<InboxScreen> {
         : selectedTabIndex == 1
         ? (state.supports ?? [])
         : (state.updates ?? []);
-    if (list.isEmpty) return _buildEmptyState();
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        if (selectedTabIndex == 0) {
-          return _buildOfferCard(list[index] as OfferModel);
-        }
-        if (selectedTabIndex == 1) {
-          final support = list as List<SupportEntity>;
-          ticketId = support[index].ticket?.id.toString();
-          return _buildSupportCard(support[index], support[index].ticket!.id);
-        }
-        return _buildUpdateCard(list[index] as UpdateModel);
-      },
+    return RefreshIndicator(
+      onRefresh: () => _fetchCurrentTab(selectedTabIndex),
+      child: list.isEmpty
+          ? LayoutBuilder(
+              builder: (context, constraints) => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  Container(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: _buildEmptyState(),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: list.length,
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                if (selectedTabIndex == 0) {
+                  return _buildOfferCard(list[index] as OfferModel);
+                }
+                if (selectedTabIndex == 1) {
+                  final support = list as List<SupportEntity>;
+                  return _buildSupportCard(
+                    support[index],
+                    support[index].ticket!.id,
+                  );
+                }
+                return _buildUpdateCard(list[index] as UpdateModel);
+              },
+            ),
     );
   }
 
@@ -213,86 +243,94 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildOfferCard(OfferEntity offer) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  offer.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-              if (!offer.isRead)
-                const Icon(Icons.circle, size: 10, color: Color(0xFF214DA1)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            offer.description,
-            style: const TextStyle(
-              color: AppColors.subTitleColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: Colors.grey, thickness: 0.5),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.access_time,
-                    size: 15,
-                    color: AppColors.profileSubTitle,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Valid until ${offer.createdAt.year}",
-                    style: const TextStyle(
-                      color: AppColors.profileSubTitle,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              if (offer.voucher != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+    return InkWell(
+      onTap: () {
+        if (!offer.isRead) {
+          context.read<InboxCubit>().markInboxItem(offer.id.toString(), false);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
                   child: Text(
-                    "% ${offer.voucher!.discountValue}",
-                    style: TextStyle(
-                      color: primaryBlue,
+                    offer.title,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),
-            ],
-          ),
-        ],
+                if (!offer.isRead)
+                  const Icon(Icons.circle, size: 10, color: Color(0xFF214DA1)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              offer.description,
+              style: const TextStyle(
+                color: AppColors.subTitleColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Colors.grey, thickness: 0.5),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time,
+                      size: 15,
+                      color: AppColors.profileSubTitle,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Valid until ${offer.createdAt.year}",
+                      style: const TextStyle(
+                        color: AppColors.profileSubTitle,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                if (offer.voucher != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "% ${offer.voucher!.discountValue}",
+                      style: TextStyle(
+                        color: primaryBlue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -317,212 +355,227 @@ class _InboxScreenState extends State<InboxScreen> {
 
   Widget _buildSupportCard(SupportEntity support, int ticketId) {
     bool isNewResponse = !support.isRead;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: isNewResponse
-            ? Border.all(color: const Color(0xFFF7BD4C), width: 1)
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (support.status == "Resolved")
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, size: 12, color: Colors.green),
-                  SizedBox(width: 4),
-                  Text(
-                    "Resolved",
-                    style: TextStyle(color: Colors.green, fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primaryLight,
-                radius: 22,
-                child: Image.asset(
-                  AppImages.chatIcon,
-                  height: 30,
-                  width: 30,
-                  color: AppColors.primary,
+    ticketNumber = support.ticket!.id;
+
+    return InkWell(
+      onTap: () {
+        if (!support.isRead) {
+          context.read<InboxCubit>().markInboxItem(support.id.toString(), true);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: isNewResponse
+              ? Border.all(color: const Color(0xFFF7BD4C), width: 1)
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (support.status == "solved")
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            support.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        if (isNewResponse)
-                          const Icon(
-                            Icons.circle,
-                            size: 8,
-                            color: Color(0xFFF7BD4C),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                    Icon(Icons.check_circle, size: 12, color: Colors.green),
+                    SizedBox(width: 4),
                     Text(
-                      support.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.subTitleColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 15,
-                          color: AppColors.subTitleColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${support.createdAt.day} Dec, ${support.createdAt.year}",
-                          style: const TextStyle(
-                            color: AppColors.profileSubTitle,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      "Resolved",
+                      style: TextStyle(color: Colors.green, fontSize: 10),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          if (isNewResponse) ...[
-            const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      context.read<InboxCubit>().initiateChat(
-                        support.ticket!.id,
-                        context.read<ProfileCubit>().state.profileModel!.id!,
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: primaryBlue),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: BlocSelector<InboxCubit, InboxStates, bool>(
-                      selector: (state) =>
-                          state.initiateChatRequestStatus ==
-                              RequestStatus.loading &&
-                          state.ticketId == support.ticket!.id,
-                      builder: (context, isLoading) {
-                        if (isLoading) {
-                          return SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: const CircularProgressIndicator(
-                              color: Colors.black,
-                              strokeWidth: 2,
-                            ),
-                          );
-                        }
-                        return const Text(
-                          "View Ticket",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        );
-                      },
-                    ),
+                CircleAvatar(
+                  backgroundColor: AppColors.primaryLight,
+                  radius: 22,
+                  child: Image.asset(
+                    AppImages.chatIcon,
+                    height: 30,
+                    width: 30,
+                    color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<InboxCubit>().initiateChat(
-                        support.ticket!.id,
-                        context.read<ProfileCubit>().state.profileModel!.id!,
-                      );
-                    },
-                    icon: Image.asset(
-                      AppImages.sendIcon,
-                      height: 16,
-                      width: 16,
-                      color: Colors.white,
-                    ),
-                    label: BlocSelector<InboxCubit, InboxStates, bool>(
-                      selector: (state) =>
-                          state.initiateChatRequestStatus ==
-                              RequestStatus.loading &&
-                          state.ticketId == ticketId,
-                      builder: (context, isLoading) {
-                        if (isLoading) {
-                          return SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              support.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
-                          );
-                        }
-                        return const Text(
-                          "Replay",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
                           ),
-                        );
-                      },
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                          if (isNewResponse)
+                            const Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: Color(0xFFF7BD4C),
+                            ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        support.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.subTitleColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            size: 15,
+                            color: AppColors.subTitleColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${support.createdAt.day} Dec, ${support.createdAt.year}",
+                            style: const TextStyle(
+                              color: AppColors.profileSubTitle,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            if (support.status == 'reply') ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        context.read<InboxCubit>().initiateChat(
+                          support.ticket!.id,
+                          context.read<ProfileCubit>().state.profileModel!.id!,
+                          ChatAction.view,
+                          support.id,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: primaryBlue),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: BlocSelector<InboxCubit, InboxStates, bool>(
+                        selector: (state) =>
+                            state.initiateChatRequestStatus ==
+                                RequestStatus.loading &&
+                            state.loadingInboxId == support.id &&
+                            state.chatAction == ChatAction.view,
+                        builder: (context, isLoading) {
+                          if (isLoading) {
+                            return SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: const CircularProgressIndicator(
+                                color: Colors.black,
+                                strokeWidth: 2,
+                              ),
+                            );
+                          }
+                          return const Text(
+                            "View Ticket",
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<InboxCubit>().initiateChat(
+                          support.ticket!.id,
+                          context.read<ProfileCubit>().state.profileModel!.id!,
+                          ChatAction.reply,
+                          support.id,
+                        );
+                      },
+                      icon: Image.asset(
+                        AppImages.sendIcon,
+                        height: 16,
+                        width: 16,
+                        color: Colors.white,
+                      ),
+                      label: BlocSelector<InboxCubit, InboxStates, bool>(
+                        selector: (state) =>
+                            state.initiateChatRequestStatus ==
+                                RequestStatus.loading &&
+                            state.loadingInboxId == support.id &&
+                            state.chatAction == ChatAction.reply,
+                        builder: (context, isLoading) {
+                          if (isLoading) {
+                            return SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            );
+                          }
+                          return const Text(
+                            "Reply",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          );
+                        },
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryBlue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -532,157 +585,165 @@ class _InboxScreenState extends State<InboxScreen> {
         ? Colors.red
         : const Color(0xFF63D098);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24), // Softer corners
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Left accent border
-            Container(
-              width: 6,
-              decoration: BoxDecoration(
-                color: themeColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  bottomLeft: Radius.circular(24),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0), // More breathing room
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon with rounded background
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: themeColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            update.tag == 'Security'
-                                ? Icons.security
-                                : Icons.auto_awesome_outlined,
-                            size: 24,
-                            color: themeColor,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Title and Blue Dot
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      update.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18,
-                                        color: Color(0xFF2D3142),
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                  Visibility(
-                                    visible: !update.isRead,
-                                    child: const Padding(
-                                      padding: EdgeInsets.only(top: 8.0),
-                                      child: Icon(
-                                        Icons.circle,
-                                        size: 12,
-                                        color: Color(0xFF4A69BD),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              // Description text
-                              Text(
-                                update.description,
-                                style: const TextStyle(
-                                  color: Color(0xFF9094A0),
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.access_time_rounded,
-                                    size: 18,
-                                    color: Color(0xFFB0B4C0),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _formatDate(update.createdAt),
-                                    style: const TextStyle(
-                                      color: Color(0xFFB0B4C0),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Footer: Time and Tag
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: themeColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            update.tag,
-                            style: TextStyle(
-                              color: themeColor,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    return InkWell(
+      onTap: () {
+        if (!update.isRead) {
+          context.read<InboxCubit>().markInboxItem(update.id.toString(), false);
+        }
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24), // Softer corners
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left accent border
+              Container(
+                width: 6,
+                decoration: BoxDecoration(
+                  color: themeColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    bottomLeft: Radius.circular(24),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0), // More breathing room
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Icon with rounded background
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: themeColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              update.tag == 'Security'
+                                  ? Icons.security
+                                  : Icons.auto_awesome_outlined,
+                              size: 24,
+                              color: themeColor,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Title and Blue Dot
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        update.title,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 18,
+                                          color: Color(0xFF2D3142),
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                    Visibility(
+                                      visible: !update.isRead,
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(top: 8.0),
+                                        child: Icon(
+                                          Icons.circle,
+                                          size: 12,
+                                          color: Color(0xFF4A69BD),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                // Description text
+                                Text(
+                                  update.description,
+                                  style: const TextStyle(
+                                    color: Color(0xFF9094A0),
+                                    fontSize: 15,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time_rounded,
+                                      size: 18,
+                                      color: Color(0xFFB0B4C0),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _formatDate(update.createdAt),
+                                      style: const TextStyle(
+                                        color: Color(0xFFB0B4C0),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Footer: Time and Tag
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: themeColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              update.tag,
+                              style: TextStyle(
+                                color: themeColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

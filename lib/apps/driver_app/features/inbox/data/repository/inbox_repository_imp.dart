@@ -59,4 +59,12 @@ class InboxRepositoryImp implements InboxRepository {
       senderType,
     );
   }
+
+  @override
+  Future<Either<String, bool>> markInboxItem(
+    String inboxItemId,
+    bool isSupport,
+  ) {
+    return _inboxApiService.markInboxItem(inboxItemId, isSupport);
+  }
 }

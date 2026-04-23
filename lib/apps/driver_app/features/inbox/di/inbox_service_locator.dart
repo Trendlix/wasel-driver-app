@@ -9,6 +9,7 @@ import 'package:wasel_driver/apps/driver_app/features/inbox/domain/repository/in
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_chat_messages_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_inbox_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/initate_chat_usecase.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/mark_inbox_item_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/send_message_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/presentation/manager/inbox_cubit.dart';
 
@@ -71,10 +72,16 @@ class InboxServiceLocator implements ServiceLocator {
       );
     }
 
+    if (!sl.isRegistered<MarkInboxItemUsecase>()) {
+      sl.registerLazySingleton<MarkInboxItemUsecase>(
+        () => MarkInboxItemUsecase(sl()),
+      );
+    }
+
     // register cubit
     if (!sl.isRegistered<InboxCubit>()) {
       sl.registerFactory<InboxCubit>(
-        () => InboxCubit(sl(), sl(), sl(), sl(), sl(), sl()),
+        () => InboxCubit(sl(), sl(), sl(), sl(), sl(), sl(), sl()),
       );
     }
   }

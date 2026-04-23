@@ -16,14 +16,40 @@ class TripsScreen extends StatefulWidget {
 }
 
 class _TripsScreenState extends State<TripsScreen> {
-  int _selectedTab = 0;
+  // "ALL" is always index 0, rest are dynamic statuses
+  String _selectedStatus = 'ALL';
+
+  // Ordered list of statuses to show (if they exist in the data)
+  static const List<String> _statusOrder = [
+    'ACTIVE',
+    'PENDING',
+    'SCHEDULED',
+    'COMPLETED',
+    'CANCELLED',
+    'EXPIRED',
+  ];
+
+  /// Returns tabs that actually have trips, always starting with "All"
+  List<String> _getAvailableTabs(List<TripEntity> trips) {
+    final presentStatuses = trips.map((t) => t.status.toUpperCase()).toSet();
+
+    final dynamicTabs = _statusOrder
+        .where((s) => presentStatuses.contains(s))
+        .toList();
+
+    return ['ALL', ...dynamicTabs];
+  }
 
   List<TripEntity> _getFilteredTrips(List<TripEntity> trips) {
-    if (_selectedTab == 0) return trips;
-    if (_selectedTab == 1) {
-      return trips.where((t) => t.status.toUpperCase() == 'COMPLETED').toList();
-    }
-    return trips.where((t) => t.status.toUpperCase() == 'CANCELLED').toList();
+    if (_selectedStatus == 'ALL') return trips;
+    return trips
+        .where((t) => t.status.toUpperCase() == _selectedStatus)
+        .toList();
+  }
+
+  int _countByStatus(List<TripEntity> trips, String status) {
+    if (status == 'ALL') return trips.length;
+    return trips.where((t) => t.status.toUpperCase() == status).length;
   }
 
   @override
@@ -68,7 +94,15 @@ class _TripsScreenState extends State<TripsScreen> {
                 } else if (state.getDriverTripsStatus ==
                     RequestStatus.success) {
                   final trips = state.trips ?? [];
+                  final availableTabs = _getAvailableTabs(trips);
                   final filteredTrips = _getFilteredTrips(trips);
+
+                  // Reset selected tab if it no longer exists in available tabs
+                  if (!availableTabs.contains(_selectedStatus)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() => _selectedStatus = 'ALL');
+                    });
+                  }
 
                   return RefreshIndicator(
                     color: AppColors.primary,
@@ -83,7 +117,7 @@ class _TripsScreenState extends State<TripsScreen> {
                           const SizedBox(height: 16),
                           _buildStatsRow(trips),
                           const SizedBox(height: 16),
-                          _buildFilterTabs(trips),
+                          _buildFilterTabs(trips, availableTabs),
                           const SizedBox(height: 16),
                           if (filteredTrips.isEmpty)
                             _buildEmptyRequests()
@@ -106,6 +140,90 @@ class _TripsScreenState extends State<TripsScreen> {
     );
   }
 
+  // ── Filter Tabs (Dynamic) ────────────────────────────────────────────────────
+
+  Widget _buildFilterTabs(List<TripEntity> trips, List<String> availableTabs) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: List.generate(availableTabs.length, (i) {
+          final status = availableTabs[i];
+          final isActive = _selectedStatus == status;
+          final count = _countByStatus(trips, status);
+          final label = '${_tabLabel(status)} ($count)';
+
+          return GestureDetector(
+            onTap: () => setState(() => _selectedStatus = status),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(
+                right: i < availableTabs.length - 1 ? 8 : 0,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isActive ? _statusColor(status) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isActive
+                      ? _statusColor(status)
+                      : const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : const Color(0xFF6B7280),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  String _tabLabel(String status) {
+    switch (status) {
+      case 'ALL':
+        return 'All';
+      case 'ACTIVE':
+        return 'Active';
+      case 'PENDING':
+        return 'Pending';
+      case 'SCHEDULED':
+        return 'Scheduled';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'CANCELLED':
+        return 'Cancelled';
+      case 'EXPIRED':
+        return 'Expired';
+      default:
+        return status;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'ACTIVE':
+        return const Color(0xFF3B82F6); // blue
+      case 'PENDING':
+        return const Color(0xFFF97316); // orange
+      case 'SCHEDULED':
+        return const Color(0xFF8B5CF6); // purple
+      case 'COMPLETED':
+        return const Color(0xFF22C55E); // green
+      case 'CANCELLED':
+        return const Color(0xFFEF4444); // red
+      case 'EXPIRED':
+        return const Color(0xFF6B7280); // grey
+      default:
+        return AppColors.primary;
+    }
+  }
+
   // ── Empty State ──────────────────────────────────────────────────────────────
 
   Widget _buildEmptyRequests() {
@@ -117,9 +235,9 @@ class _TripsScreenState extends State<TripsScreen> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
-        children: [
-          const Icon(Icons.inbox_outlined, size: 48, color: Color(0xFF9CA3AF)),
-          const SizedBox(height: 12),
+        children: const [
+          Icon(Icons.inbox_outlined, size: 48, color: Color(0xFF9CA3AF)),
+          SizedBox(height: 12),
           Text(
             'No requests available',
             style: TextStyle(
@@ -128,18 +246,17 @@ class _TripsScreenState extends State<TripsScreen> {
               color: Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'New requests will appear here',
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
-          const SizedBox(height: 10),
         ],
       ),
     );
   }
 
-  // ── Blue Header ─────────────────────────────────────────────────────────────
+  // ── Blue Header ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
@@ -152,10 +269,10 @@ class _TripsScreenState extends State<TripsScreen> {
         right: 16,
         bottom: 16,
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const SizedBox(width: 12),
-          const Column(
+          SizedBox(width: 12),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -194,7 +311,7 @@ class _TripsScreenState extends State<TripsScreen> {
         }
       }
     }
-    String averageRating = ratedTrips > 0
+    final averageRating = ratedTrips > 0
         ? (totalRating / ratedTrips).toStringAsFixed(1)
         : '0.0';
 
@@ -279,56 +396,6 @@ class _TripsScreenState extends State<TripsScreen> {
     );
   }
 
-  // ── Filter Tabs ──────────────────────────────────────────────────────────────
-
-  Widget _buildFilterTabs(List<TripEntity> trips) {
-    final completedCount = trips
-        .where((t) => t.status.toUpperCase() == 'COMPLETED')
-        .length;
-    final cancelledCount = trips
-        .where((t) => t.status.toUpperCase() == 'CANCELLED')
-        .length;
-    final allCount = trips.length;
-
-    final tabs = [
-      'All ($allCount)',
-      'Completed ($completedCount)',
-      'Cancelled ($cancelledCount)',
-    ];
-
-    return Row(
-      children: List.generate(tabs.length, (i) {
-        final isActive = _selectedTab == i;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedTab = i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: EdgeInsets.only(right: i < tabs.length - 1 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isActive ? AppColors.primary : const Color(0xFFE5E7EB),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                tabs[i],
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isActive ? Colors.white : const Color(0xFF6B7280),
-                ),
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
   // ── Trip Card ────────────────────────────────────────────────────────────────
 
   Widget _buildTripCard(TripEntity trip) {
@@ -372,7 +439,6 @@ class _TripsScreenState extends State<TripsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top: ID + status + earning ─────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -405,10 +471,7 @@ class _TripsScreenState extends State<TripsScreen> {
                   ),
               ],
             ),
-
             const SizedBox(height: 6),
-
-            // ── Date + rating ──────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -450,43 +513,35 @@ class _TripsScreenState extends State<TripsScreen> {
                   ),
               ],
             ),
-
             const SizedBox(height: 12),
-
-            // ── Pickup ─────────────────────────────────────────────
             _buildLocationRow(
               icon: Icons.circle,
               iconColor: const Color(0xFF22C55E),
               label: 'PICKUP',
               value: trip.pickup,
             ),
-
-            // ── Drop-offs ───────────────────────────────────────────
             if (trip.dropOff.isNotEmpty)
-              ...trip.dropOff
-                  .map(
-                    (dropOffItem) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Connector line
-                        Padding(
-                          padding: const EdgeInsets.only(left: 5),
-                          child: Container(
-                            width: 1.5,
-                            height: 16,
-                            color: const Color(0xFFE5E7EB),
-                          ),
-                        ),
-                        _buildLocationRow(
-                          icon: Icons.location_on,
-                          iconColor: const Color(0xFFEF4444),
-                          label: 'DROP-OFF',
-                          value: dropOffItem,
-                        ),
-                      ],
+              ...trip.dropOff.map(
+                (dropOffItem) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: Container(
+                        width: 1.5,
+                        height: 16,
+                        color: const Color(0xFFE5E7EB),
+                      ),
                     ),
-                  )
-                  .toList()
+                    _buildLocationRow(
+                      icon: Icons.location_on,
+                      iconColor: const Color(0xFFEF4444),
+                      label: 'DROP-OFF',
+                      value: dropOffItem,
+                    ),
+                  ],
+                ),
+              )
             else ...[
               Padding(
                 padding: const EdgeInsets.only(left: 5),
@@ -503,12 +558,9 @@ class _TripsScreenState extends State<TripsScreen> {
                 value: 'N/A',
               ),
             ],
-
             const SizedBox(height: 12),
             const Divider(height: 1, color: Color(0xFFF3F4F6)),
             const SizedBox(height: 10),
-
-            // ── Footer ────────────────────────────────────────────
             Row(
               children: [
                 const Icon(
@@ -560,11 +612,11 @@ class _TripsScreenState extends State<TripsScreen> {
   // ── Status Badge ─────────────────────────────────────────────────────────────
 
   Widget _buildStatusBadge(String status) {
-    final isCompleted = status.toUpperCase() == 'COMPLETED';
+    final color = _statusColor(status.toUpperCase());
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -572,9 +624,7 @@ class _TripsScreenState extends State<TripsScreen> {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: isCompleted
-              ? const Color(0xFF22C55E)
-              : const Color(0xFFEF4444),
+          color: color,
           letterSpacing: 0.3,
         ),
       ),

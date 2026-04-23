@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
 import 'package:wasel_driver/apps/driver_app/features/settings/domain/entity/faq_type_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/settings/presentation/manager/settings_cubit.dart';
@@ -189,7 +190,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Widget _buildLiveChatCard() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.pushNamed(context, AppRouteNames.submitTicketScreen);
+      },
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),

@@ -29,4 +29,9 @@ abstract class InboxRepository {
     String message,
     String senderType,
   );
+
+  Future<Either<String, bool>> markInboxItem(
+    String inboxItemId,
+    bool isSupport,
+  );
 }

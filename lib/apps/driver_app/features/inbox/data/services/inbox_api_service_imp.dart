@@ -105,7 +105,7 @@ class InboxApiServiceImp implements InboxApiService {
     try {
       final result = await _apiClient.post(
         ApiEndpoints.chatInitiatPath,
-        body: {'ticketId': ticketId, 'userId': userId},
+        body: {'ticketId': ticketId, 'driverId': userId},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -170,6 +170,31 @@ class InboxApiServiceImp implements InboxApiService {
       } else {
         final response = result.right as Response;
         if (response.statusCode == 201) {
+          return Right(true);
+        } else {
+          return Left(response.data['message']);
+        }
+      }
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, bool>> markInboxItem(
+    String inboxItemId,
+    bool isSupport,
+  ) async {
+    try {
+      final result = await _apiClient.patch(
+        ApiEndpoints.markInboxItem,
+        body: {'inboxId': int.parse(inboxItemId), 'isSupport': isSupport},
+      );
+      if (result.isLeft) {
+        return Left(result.left);
+      } else {
+        final response = result.right as Response;
+        if (response.statusCode == 200) {
           return Right(true);
         } else {
           return Left(response.data['message']);

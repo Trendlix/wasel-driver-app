@@ -280,7 +280,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
               Expanded(
                 child: _buildStatBlock(
                   'Distance',
-                  '-',
+                  '${request.distanceInkm ?? 0} km',
                   const Color(0xFF1A1A2E),
                 ),
               ),
@@ -294,7 +294,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
               Expanded(
                 child: _buildStatBlock(
                   'Earning',
-                  '${request.currency ?? 'EGP'} ${request.price ?? 0}',
+                  '${request.currency ?? 'EGP'} ${request.amountGoesToDriver ?? 0}',
                   const Color(0xFF22C55E),
                 ),
               ),
@@ -328,7 +328,10 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
 
           const SizedBox(height: 10),
           // fixed ui to 85% goes to you platfomr fee : EGP 138
-          _revenueSplitBadge(),
+          _revenueSplitBadge(
+            percentage: request.percentage?.toDouble() ?? 0,
+            platformFee: request.platformFees?.toDouble() ?? 0,
+          ),
         ],
       ),
     );

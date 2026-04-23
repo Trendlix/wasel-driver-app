@@ -392,13 +392,28 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
         border: Border.all(color: const Color(0xFFD2E3FC)),
       ),
       child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline, color: AppColors.primary),
           SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'We typically respond to tickets within 24 hours.',
-              style: TextStyle(color: AppColors.primary, fontSize: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Support Response Time',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'We typically respond to tickets within 24 hours. For urgent issues, please call our hotline.',
+                  style: TextStyle(color: AppColors.primary, fontSize: 11),
+                ),
+              ],
             ),
           ),
         ],

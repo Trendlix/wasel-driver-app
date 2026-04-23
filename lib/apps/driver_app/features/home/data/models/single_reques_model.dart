@@ -16,6 +16,10 @@ class SingleRequestModel extends SingleRequestEntity {
     required super.estimatedTimeInMinutes,
     required super.waselSuggestedPrice,
     required super.label,
+    required super.distanceInkm,
+    required super.platformFees,
+    required super.amountGoesToDriver,
+    required super.percentage,
   });
 
   factory SingleRequestModel.fromJson(Map<String, dynamic> json) {
@@ -36,6 +40,10 @@ class SingleRequestModel extends SingleRequestEntity {
           ? (json['wasel_suggested_price'] as num).toDouble()
           : null,
       label: json['label'],
+      distanceInkm: (json['distance_in_km'] as num).toDouble(),
+      platformFees: (json['platform_fees'] as num).toDouble(),
+      amountGoesToDriver: (json['amount_goes_to_driver'] as num).toDouble(),
+      percentage: json['amount_goes_to_driver_percentage'],
     );
   }
 }

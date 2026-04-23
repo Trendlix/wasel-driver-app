@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/chat_messages_entity.dart';
@@ -37,11 +38,17 @@ class InboxStates extends Equatable {
   final String? initiateChatErrorMessage;
   final TicketStatusEntity? ticketStatusEntity;
   final int? ticketId;
+  final int? loadingInboxId;
+  final ChatAction? chatAction;
 
   // send message states
   final RequestStatus? sendMessageRequestStatus;
   final String? sendMessageErrorMessage;
   final String? lastSentMessage;
+
+  // mark inbox item states
+  final RequestStatus? markInboxItemRequestStatus;
+  final String? markInboxItemErrorMessage;
 
   const InboxStates({
     this.getInboxRequestStatus,
@@ -54,6 +61,8 @@ class InboxStates extends Equatable {
     this.initiateChatErrorMessage,
     this.ticketStatusEntity,
     this.ticketId,
+    this.loadingInboxId,
+    this.chatAction,
     // chat messages states
     this.getChatMessagesRequestStatus,
     this.chatMessages,
@@ -62,6 +71,9 @@ class InboxStates extends Equatable {
     this.sendMessageRequestStatus,
     this.sendMessageErrorMessage,
     this.lastSentMessage,
+    // mark inbox item states
+    this.markInboxItemRequestStatus,
+    this.markInboxItemErrorMessage,
   });
 
   InboxStates copyWith({
@@ -75,6 +87,8 @@ class InboxStates extends Equatable {
     String? initiateChatErrorMessage,
     TicketStatusEntity? ticketStatusEntity,
     int? ticketId,
+    int? loadingInboxId,
+    ChatAction? chatAction,
     // chat messages states
     RequestStatus? getChatMessagesRequestStatus,
     List<ChatMessagesEntity>? chatMessages,
@@ -83,6 +97,9 @@ class InboxStates extends Equatable {
     RequestStatus? sendMessageRequestStatus,
     String? sendMessageErrorMessage,
     String? lastSentMessage,
+    // mark inbox item states
+    RequestStatus? markInboxItemRequestStatus,
+    String? markInboxItemErrorMessage,
   }) {
     return InboxStates(
       getInboxRequestStatus:
@@ -91,25 +108,29 @@ class InboxStates extends Equatable {
       updates: updates ?? this.updates,
       supports: supports ?? this.supports,
       getInboxErrorMessage: getInboxErrorMessage ?? this.getInboxErrorMessage,
-      // initate chat states
       initiateChatRequestStatus:
           initiateChatRequestStatus ?? this.initiateChatRequestStatus,
       initiateChatErrorMessage:
           initiateChatErrorMessage ?? this.initiateChatErrorMessage,
       ticketStatusEntity: ticketStatusEntity ?? this.ticketStatusEntity,
-      ticketId: ticketId ?? this.ticketId,
-      // chat messages states
+      ticketId: ticketId == -1 ? null : (ticketId ?? this.ticketId),
+      loadingInboxId:
+          loadingInboxId == -1 ? null : (loadingInboxId ?? this.loadingInboxId),
+      chatAction: chatAction ?? this.chatAction,
       getChatMessagesRequestStatus:
           getChatMessagesRequestStatus ?? this.getChatMessagesRequestStatus,
       chatMessages: chatMessages ?? this.chatMessages,
       getChatMessagesErrorMessage:
           getChatMessagesErrorMessage ?? this.getChatMessagesErrorMessage,
-      // send message states
       sendMessageRequestStatus:
           sendMessageRequestStatus ?? this.sendMessageRequestStatus,
       sendMessageErrorMessage:
           sendMessageErrorMessage ?? this.sendMessageErrorMessage,
       lastSentMessage: lastSentMessage ?? this.lastSentMessage,
+      markInboxItemRequestStatus:
+          markInboxItemRequestStatus ?? this.markInboxItemRequestStatus,
+      markInboxItemErrorMessage:
+          markInboxItemErrorMessage ?? this.markInboxItemErrorMessage,
     );
   }
 
@@ -125,6 +146,8 @@ class InboxStates extends Equatable {
     initiateChatErrorMessage,
     ticketStatusEntity,
     ticketId,
+    loadingInboxId,
+    chatAction,
     // chat messages states
     getChatMessagesRequestStatus,
     chatMessages,
@@ -133,6 +156,9 @@ class InboxStates extends Equatable {
     sendMessageRequestStatus,
     sendMessageErrorMessage,
     lastSentMessage,
+    // mark inbox item states
+    markInboxItemRequestStatus,
+    markInboxItemErrorMessage,
   ];
 
   @override
@@ -158,6 +184,8 @@ class InboxStates extends Equatable {
       initiateChatErrorMessage,
       ticketStatusEntity,
       ticketId,
+      loadingInboxId,
+      chatAction,
     ]);
 
     addIfNotNull('getChatMessages', getChatMessagesRequestStatus, [
@@ -170,6 +198,11 @@ class InboxStates extends Equatable {
       sendMessageRequestStatus,
       sendMessageErrorMessage,
       lastSentMessage,
+    ]);
+
+    addIfNotNull('markInboxItem', markInboxItemRequestStatus, [
+      markInboxItemRequestStatus,
+      markInboxItemErrorMessage,
     ]);
 
     return activeStates.isEmpty

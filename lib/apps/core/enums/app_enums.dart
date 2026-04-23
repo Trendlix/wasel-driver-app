@@ -9,3 +9,5 @@ enum SortEnum { createdAt, amount }
 enum SortOrderEnum { asc, desc }
 
 enum NetworkStatus { online, offline, noInternet }
+
+enum ChatAction { view, reply }

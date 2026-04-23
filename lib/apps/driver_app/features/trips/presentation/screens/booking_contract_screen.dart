@@ -91,7 +91,10 @@ class _BookingContractScreenState extends State<BookingContractScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Header
-                    _ContractHeader(date: widget.trip.date),
+                    _ContractHeader(
+                      date: widget.trip.date,
+                      tripNumber: widget.trip.tripNumber,
+                    ),
 
                     // Body
                     Padding(
@@ -99,56 +102,93 @@ class _BookingContractScreenState extends State<BookingContractScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Earning Section ─────────────────────────────
+                          _buildEarningSummary(widget.trip),
+                          const SizedBox(height: 24),
+
                           const _SectionTitle('CUSTOMER DETAILS'),
                           const SizedBox(height: 10),
                           _InfoRow(
-                            label: 'Name:',
+                            label: 'Customer Name:',
                             value: widget.trip.user.name ?? 'N/A',
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           _InfoRow(
-                            label: 'Phone:',
+                            label: 'Contact Phone:',
                             value: widget.trip.user.phone ?? 'N/A',
                           ),
 
-                          const SizedBox(height: 20),
-                          const _SectionTitle('TRIP DETAILS'),
+                          const SizedBox(height: 24),
+                          const _SectionTitle('TRIP ROUTE'),
                           const SizedBox(height: 10),
-                          _LocationRow(
-                            icon: Icons.location_on,
-                            iconColor: const Color(0xFF1565C0),
-                            label: 'Pickup Location:',
-                            value: widget.trip.pickup,
-                          ),
+                          _EnhancedRouteDisplay(trip: widget.trip),
+
+                          const SizedBox(height: 24),
+                          const _SectionTitle('TRIP SUMMARY'),
                           const SizedBox(height: 10),
-                          _LocationRow(
-                            icon: Icons.warehouse_outlined,
-                            iconColor: const Color(0xFF1565C0),
-                            label: 'Storage Location:',
-                            value: widget.trip.dropOff.isNotEmpty
-                                ? widget.trip.dropOff.last
-                                : 'N/A',
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _StatItem(
+                                  label: 'Distance',
+                                  value: widget.trip.distanceBetween != null
+                                      ? '${widget.trip.distanceBetween} km'
+                                      : 'N/A',
+                                  icon: Icons.navigation_outlined,
+                                ),
+                              ),
+                              Expanded(
+                                child: _StatItem(
+                                  label: 'Est. Time',
+                                  value: '${widget.trip.estimatedTime} min',
+                                  icon: Icons.access_time_rounded,
+                                ),
+                              ),
+                            ],
                           ),
 
-                          const SizedBox(height: 20),
-                          _DurationSection(date: widget.trip.date),
-
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           _ItemDetailsSection(
                             typeOfGoods: widget.trip.typeOfGoods,
                             weight:
                                 widget.trip.totalWeight ?? widget.trip.weight,
                           ),
 
-                          const SizedBox(height: 20),
-                          const _TermsSection(),
+                          if (widget.trip.specialNotes != null &&
+                              widget.trip.specialNotes!.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            const _SectionTitle('SPECIAL INSTRUCTIONS'),
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F7FA),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
+                                ),
+                              ),
+                              child: Text(
+                                widget.trip.specialNotes!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 24),
+                          const _TermsSection(),
+
+                          const SizedBox(height: 32),
                           _SignatureSection(
                             customerName: widget.trip.user.name ?? 'Customer',
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           _ElectronicNotice(tripNumber: widget.trip.tripNumber),
                         ],
                       ),
@@ -200,13 +240,59 @@ class _BookingContractScreenState extends State<BookingContractScreen> {
       ),
     );
   }
+
+  Widget _buildEarningSummary(TripEntity trip) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF22C55E).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF22C55E),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.payments_outlined, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Total Contract Value',
+                style: TextStyle(
+                  color: Color(0xFF15803D),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${trip.currency} ${trip.price.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  color: Color(0xFF15803D),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Widgets ───────────────────────────────────────────────────────────────────
 
 class _ContractHeader extends StatelessWidget {
   final DateTime? date;
-  const _ContractHeader({required this.date});
+  final String tripNumber;
+  const _ContractHeader({required this.date, required this.tripNumber});
 
   @override
   Widget build(BuildContext context) {
@@ -219,27 +305,45 @@ class _ContractHeader extends StatelessWidget {
         color: Color(0xFF1565C0),
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       child: Column(
         children: [
           const Text(
             'WASEL CONTRACT',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+              letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Electronic Storage Agreement',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Trip ID: $tripNumber',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Date: $formattedDate',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.event, color: Colors.white70, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                formattedDate,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
           ),
         ],
       ),
@@ -274,14 +378,26 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
         Text(
-          value,
+          label,
           style: const TextStyle(
-            color: Colors.black87,
+            color: Color(0xFF6B7280),
             fontSize: 13,
             fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Color(0xFF1F2937),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -289,17 +405,66 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _LocationRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
+class _EnhancedRouteDisplay extends StatelessWidget {
+  final TripEntity trip;
+  const _EnhancedRouteDisplay({required this.trip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          _RoutePoint(
+            label: 'PICKUP',
+            value: trip.pickup,
+            icon: Icons.location_on,
+            color: const Color(0xFF22C55E),
+          ),
+          if (trip.dropOff.isNotEmpty) ...[
+            const _RouteConnector(),
+            ...trip.dropOff.asMap().entries.map((entry) {
+              final index = entry.key;
+              final address = entry.value;
+              final isLast = index == trip.dropOff.length - 1;
+
+              return Column(
+                children: [
+                  _RoutePoint(
+                    label: isLast
+                        ? 'FINAL DESTINATION'
+                        : 'DROP-OFF ${index + 1}',
+                    value: address,
+                    icon: Icons.warehouse,
+                    color: isLast ? const Color(0xFFEF4444) : Colors.orange,
+                  ),
+                  if (!isLast) const _RouteConnector(),
+                ],
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutePoint extends StatelessWidget {
   final String label;
   final String value;
+  final IconData icon;
+  final Color color;
 
-  const _LocationRow({
-    required this.icon,
-    required this.iconColor,
+  const _RoutePoint({
     required this.label,
     required this.value,
+    required this.icon,
+    required this.color,
   });
 
   @override
@@ -307,29 +472,98 @@ class _LocationRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: iconColor, size: 18),
-        const SizedBox(width: 8),
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(
+                  color: color.withOpacity(0.8),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
-                  color: Colors.black87,
+                  color: Color(0xFF1F2937),
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _RouteConnector extends StatelessWidget {
+  const _RouteConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
+        child: Container(
+          width: 2,
+          height: 16,
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(1),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF1565C0)),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        ],
+      ),
     );
   }
 }

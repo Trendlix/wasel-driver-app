@@ -13,6 +13,10 @@ class SingleRequestEntity {
   final int? estimatedTimeInMinutes;
   final double? waselSuggestedPrice;
   final String? label;
+  final double? distanceInkm;
+  final double? platformFees;
+  final double? amountGoesToDriver;
+  final int? percentage;
 
   SingleRequestEntity({
     required this.id,
@@ -29,6 +33,10 @@ class SingleRequestEntity {
     required this.estimatedTimeInMinutes,
     required this.waselSuggestedPrice,
     required this.label,
+    required this.distanceInkm,
+    required this.platformFees,
+    required this.amountGoesToDriver,
+    required this.percentage,
   });
 }
 

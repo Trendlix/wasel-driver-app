@@ -26,4 +26,9 @@ abstract class InboxApiService {
     String message,
     String senderType,
   );
+
+  Future<Either<String, bool>> markInboxItem(
+    String inboxItemId,
+    bool isSupport,
+  );
 }

@@ -44,7 +44,7 @@ class SettingsApiServiceImpl implements SettingsApiService {
       {
         final response = result.right as Response;
         if (response.statusCode == 201) {
-          return Right(response.data['data']['id'].toString());
+          return Right(response.data['data']['ticket']['id'].toString());
         }
         return Left(response.data['message'] ?? 'Something went wrong');
       }
