@@ -102,14 +102,16 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     List<Widget> children = [];
     Map<String, List<FaqEntity>> grouped = {};
     for (var faq in faqs) {
-      String category = faq.faqType.name;
+      String category = faq.faqType!.name ?? '';
       grouped.putIfAbsent(category, () => []).add(faq);
     }
 
     grouped.forEach((categoryName, items) {
       children.add(FAQCategory(title: categoryName));
       children.addAll(
-        items.map((faq) => FAQTile(question: faq.question, answer: faq.answer)),
+        items.map(
+          (faq) => FAQTile(question: faq.question!, answer: faq.answer),
+        ),
       );
     });
 

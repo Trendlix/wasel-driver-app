@@ -1,12 +1,12 @@
 import 'package:equatable/equatable.dart';
 
 class FaqEntity extends Equatable {
-  final int id;
-  final String question;
-  final String answer;
-  final String targetType;
-  final DateTime createdAt;
-  final FaqTypeEntity faqType;
+  final int? id;
+  final String? question;
+  final String? answer;
+  final String? targetType;
+  final DateTime? createdAt;
+  final FaqTypeEntity? faqType;
 
   const FaqEntity({
     required this.id,
@@ -22,9 +22,9 @@ class FaqEntity extends Equatable {
 }
 
 class FaqTypeEntity extends Equatable {
-  final int id;
-  final String name;
-  final String description;
+  final int? id;
+  final String? name;
+  final String? description;
 
   const FaqTypeEntity({
     required this.id,

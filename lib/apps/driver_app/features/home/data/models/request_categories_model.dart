@@ -44,6 +44,10 @@ class RequestModel extends RequestEntity {
     required super.distanceBetween,
     required super.estimatedTime,
     required super.label,
+    required super.dateOfRequest,
+    required super.platformFees,
+    required super.amountGoesToDriver,
+    required super.amountGoesToDriverPercentage,
   });
 
   factory RequestModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +62,11 @@ class RequestModel extends RequestEntity {
       distanceBetween: (json['distance_between'] as num).toDouble(),
       estimatedTime: json['estimated_time_in_minutes'],
       label: json['label'],
+      dateOfRequest: json['date_of_request'],
+      platformFees: (json['platform_fees'] as num).toDouble(),
+      amountGoesToDriver: (json['amount_goes_to_driver'] as num).toDouble(),
+      amountGoesToDriverPercentage:
+          (json['amount_goes_to_driver_percentage'] as num).toDouble(),
     );
   }
 }

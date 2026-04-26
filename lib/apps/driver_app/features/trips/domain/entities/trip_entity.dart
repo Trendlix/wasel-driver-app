@@ -18,6 +18,9 @@ class TripEntity {
   final dynamic totalWeight;
   final dynamic platformFees;
   final dynamic amountGoesToDriver;
+  final String? pickedUpAt;
+  final String? completedAt;
+  final String? startedAt;
 
   TripEntity({
     required this.id,
@@ -39,6 +42,9 @@ class TripEntity {
     this.totalWeight,
     this.platformFees,
     this.amountGoesToDriver,
+    this.pickedUpAt,
+    this.completedAt,
+    this.startedAt,
   });
 }
 

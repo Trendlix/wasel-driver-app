@@ -23,6 +23,10 @@ class RequestEntity {
   final double? distanceBetween;
   final int? estimatedTime;
   final String? label;
+  final String? dateOfRequest;
+  final double? platformFees;
+  final double? amountGoesToDriver;
+  final double? amountGoesToDriverPercentage;
 
   RequestEntity({
     required this.id,
@@ -35,6 +39,10 @@ class RequestEntity {
     required this.distanceBetween,
     required this.estimatedTime,
     required this.label,
+    required this.dateOfRequest,
+    required this.platformFees,
+    required this.amountGoesToDriver,
+    required this.amountGoesToDriverPercentage,
   });
 }
 

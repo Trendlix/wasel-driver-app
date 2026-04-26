@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
@@ -366,8 +367,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'PICKUP LOCATION',
                           style: TextStyle(
                             fontSize: 10,
@@ -376,6 +377,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                             letterSpacing: 0.5,
                           ),
                         ),
+                        if (trip.pickedUpAt != null)
+                          Text(
+                            _formatTime(trip.pickedUpAt),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -406,7 +416,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
           // ── Drop-offs ─────────────────────────────────────────────
           if (trip.dropOff.isNotEmpty)
-            ...trip.dropOff.map((dropOffItem) {
+            ...trip.dropOff.asMap().entries.map((entry) {
+              final index = entry.key;
+              final dropOffItem = entry.value;
+              final bool isLast = index == trip.dropOff.length - 1;
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -450,8 +464,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: const [
-                                Text(
+                              children: [
+                                const Text(
                                   'DROP-OFF LOCATION',
                                   style: TextStyle(
                                     fontSize: 10,
@@ -460,6 +474,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                     letterSpacing: 0.5,
                                   ),
                                 ),
+                                if (isLast && trip.completedAt != null)
+                                  Text(
+                                    _formatTime(trip.completedAt),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 3),
@@ -489,7 +512,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   ),
                 ],
               );
-            }).toList()
+            })
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -827,5 +850,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         ),
       ],
     );
+  }
+
+  String _formatTime(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(timeStr);
+      return DateFormat('hh:mm a').format(date);
+    } catch (e) {
+      return timeStr;
+    }
   }
 }

@@ -16,8 +16,12 @@ class FaqModel extends FaqEntity {
       question: json['question'],
       answer: json['answer'],
       targetType: json['target_type'],
-      createdAt: DateTime.parse(json['created_at']),
-      faqType: FaqTypeModel.fromJson(json['type']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      faqType: json['type'] != null
+          ? FaqTypeModel.fromJson(json['type'])
+          : null,
     );
   }
 
@@ -27,7 +31,7 @@ class FaqModel extends FaqEntity {
       'question': question,
       'answer': answer,
       'target_type': targetType,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'type': (faqType as FaqTypeModel).toJson(),
     };
   }

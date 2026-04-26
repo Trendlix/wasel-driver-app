@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
+import 'package:wasel_driver/apps/core/widgets/error_retry_widget.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/domain/entities/request_categories_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/presentation/cubit/home_states.dart';
@@ -90,10 +92,15 @@ class _NewRequestsScreenState extends State<NewRequestsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
-      child: Text(
-        "No requests available in this category",
-        style: TextStyle(color: Color(0xFF6B7280)),
+    return Center(
+      child: ErrorRetryWidget(
+        message: "No requests available in this category",
+        onRetry: () {
+          context.read<HomeCubit>().getDriverRequests(
+            widget.latitude,
+            widget.longitude,
+          );
+        },
       ),
     );
   }
@@ -145,8 +152,11 @@ class _NewRequestsScreenState extends State<NewRequestsScreen> {
       category: request.typeOfGoods ?? 'General',
       categoryIcon: _getIconForCategory(request.typeOfGoods),
       isUrgent: request.label?.toLowerCase() == 'urgent',
-      earningsPercent: '85% goes to you',
-      platformFee: '$currency ${fee.toStringAsFixed(0)}',
+      earningsPercent:
+          '${request.amountGoesToDriverPercentage ?? 0}% goes to you',
+      platformFee:
+          '$currency ${(request.platformFees ?? 0).toStringAsFixed(0)}',
+      dateOfRequest: request.dateOfRequest ?? '',
     );
   }
 
@@ -308,6 +318,7 @@ class _NewRequestsScreenState extends State<NewRequestsScreen> {
     required bool isUrgent,
     required String earningsPercent,
     required String platformFee,
+    required String dateOfRequest,
     void Function()? onClick,
   }) {
     return InkWell(
@@ -407,7 +418,33 @@ class _NewRequestsScreenState extends State<NewRequestsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  //const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      SizedBox(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 12,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatDate(dateOfRequest),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   _buildLocationRow(
                     icon: Icons.circle,
                     iconColor: const Color(0xFF22C55E),
@@ -687,5 +724,23 @@ class _NewRequestsScreenState extends State<NewRequestsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '—';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final requestDate = DateTime(date.year, date.month, date.day);
+
+      if (requestDate == today) {
+        return 'Today';
+      } else {
+        return DateFormat('dd MMM yyyy').format(date);
+      }
+    } catch (e) {
+      return dateStr;
+    }
   }
 }

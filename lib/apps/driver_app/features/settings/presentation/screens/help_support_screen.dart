@@ -42,7 +42,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 // Build unique types list
                 final Map<int, FaqTypeEntity> typesMap = {};
                 for (final faq in faqs) {
-                  typesMap[faq.faqType.id] = faq.faqType;
+                  if (faq.faqType != null && faq.faqType?.id != null) {
+                    typesMap[faq.faqType!.id!] = faq.faqType!;
+                  }
                 }
                 final types = typesMap.values.toList();
 
@@ -50,7 +52,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 final filtered = _selectedTypeId == null
                     ? faqs
                     : faqs
-                          .where((f) => f.faqType.id == _selectedTypeId)
+                          .where((f) => f.faqType?.id == _selectedTypeId)
                           .toList();
 
                 return SingleChildScrollView(
@@ -370,7 +372,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _buildTab(
-                label: type.name,
+                label: type.name ?? '',
                 isActive: isActive,
                 onTap: () {
                   setState(() {

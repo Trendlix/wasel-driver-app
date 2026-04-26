@@ -21,7 +21,7 @@ class ApiEndpoints {
   static const String changeUserPasswordPath = 'auth/change-password';
   static const String getTicketCategoriesPath = 'ticket-category';
   static const String termsAndConditionsPath = 'driver/terms-conditions';
-  static const String frequentlyAskedQuestionsPath = 'faqs';
+  static const String frequentlyAskedQuestionsPath = 'faq';
   static const String notificationsPath = 'driver/inbox';
   static const String markAllNotificationsAsReadPath =
       'driver/inbox/mark-all-as-read';

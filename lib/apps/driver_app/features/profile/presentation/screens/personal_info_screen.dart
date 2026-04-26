@@ -98,9 +98,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   if (state.getDriverBasicInfoStatus == RequestStatus.success &&
                       state.driverBasicInfoModel != null) {
                     final basicInfo = state.driverBasicInfoModel!;
-                    _nameController.text = basicInfo.name;
-                    _phoneController.text = basicInfo.phone;
-                    _emailController.text = basicInfo.email;
+                    _nameController.text = basicInfo.name!;
+                    _phoneController.text = basicInfo.phone!;
+                    _emailController.text = basicInfo.email!;
                   }
 
                   if (state.getDriverLegalInfoStatus == RequestStatus.success &&
@@ -246,7 +246,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         id: currentInfo.id,
                         name: _nameController.text,
                         email: _emailController.text,
-                        phone: currentInfo.phone, // Phone is read-only
+                        phone: currentInfo.phone,
+                        isOnline: true, // Phone is read-only
                       );
                       context.read<ProfileCubit>().updateDriverBasicInfo(
                         updatedInfo,

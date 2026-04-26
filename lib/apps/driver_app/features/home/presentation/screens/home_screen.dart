@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -14,6 +15,8 @@ import 'package:wasel_driver/apps/core/widgets/error_retry_widget.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/domain/entities/request_categories_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/presentation/cubit/home_cubit.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/presentation/cubit/home_states.dart';
+import 'package:wasel_driver/apps/driver_app/features/profile/domain/entity/profile_entity.dart';
+import 'package:wasel_driver/apps/driver_app/features/profile/presentation/manager/profile_cubit.dart';
 import 'package:wasel_driver/apps/driver_app/features/trips/presentation/cubit/driver_trip_cubit.dart';
 import 'package:wasel_driver/apps/driver_app/features/trips/presentation/cubit/driver_trip_states.dart';
 import 'package:wasel_driver/apps/features/app_permissions/service/app_permission_service.dart';
@@ -38,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // Initialize network service
     _initializeNetworkService();
 
     context.read<HomeCubit>().getDriverProfile();
@@ -67,10 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initializeNetworkService() async {
-    // Initialize the service
     await NetworkConnectivityService.instance.initialize();
 
-    // Get initial status
     final initialStatus = NetworkConnectivityService.instance.currentStatus;
     setState(() {
       _networkStatus = initialStatus;
@@ -79,13 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     });
 
-    // Listen to network changes
     _networkSubscription = NetworkConnectivityService.instance.onStatusChanged
         .listen((status) {
           if (!mounted) return;
           setState(() {
             _networkStatus = status;
-            // Auto set offline when no internet
             if (status != NetworkStatus.online) {
               _isOnline = false;
             }
@@ -116,23 +114,42 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DriverTripCubit, DriverTripStates>(
-      listenWhen: (previous, current) =>
-          previous.cancelDriverTripStatus != current.cancelDriverTripStatus,
-      listener: (context, state) {
-        if (state.cancelDriverTripStatus == RequestStatus.success) {
-          _onRefresh();
-        } else if (state.cancelDriverTripStatus == RequestStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                state.cancelDriverTripMessage ?? 'An error occurred',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<DriverTripCubit, DriverTripStates>(
+          listenWhen: (previous, current) =>
+              previous.cancelDriverTripStatus != current.cancelDriverTripStatus,
+          listener: (context, state) {
+            if (state.cancelDriverTripStatus == RequestStatus.success) {
+              _onRefresh();
+            } else if (state.cancelDriverTripStatus == RequestStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.cancelDriverTripMessage ?? 'An error occurred',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<HomeCubit, HomeStates>(
+          listenWhen: (previous, current) =>
+              previous.getDriverProfileRequestStatus !=
+                  current.getDriverProfileRequestStatus &&
+              current.getDriverProfileRequestStatus == RequestStatus.success,
+          listener: (context, state) {
+            if (state.driverProfileModel != null) {
+              setState(() {
+                _isOnline =
+                    (state.driverProfileModel?.isOnline ?? false) &&
+                    _networkStatus == NetworkStatus.online;
+              });
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F7FA),
         appBar: PreferredSize(
@@ -157,13 +174,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   else
                     BlocBuilder<HomeCubit, HomeStates>(
                       builder: (context, state) {
-                        // ── Loading ──────────────────────────────────────
                         if (state.driverRequestsRequestStatus ==
                             RequestStatus.loading) {
                           return _buildRequestsShimmer();
                         }
 
-                        // ── Error ────────────────────────────────────────
                         if (state.driverRequestsRequestStatus ==
                             RequestStatus.error) {
                           return ErrorRetryWidget(
@@ -181,11 +196,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         }
 
-                        // ── Success ──────────────────────────────────────
                         if (state.driverRequestsRequestStatus ==
                             RequestStatus.success) {
                           final requests = state.driverRequestsModel?.all ?? [];
-                          final preview = requests.take(2).toList();
+                          final preview = requests.take(4).toList();
 
                           if (preview.isEmpty) {
                             return _buildEmptyRequests(
@@ -216,14 +230,41 @@ class _HomeScreenState extends State<HomeScreen> {
                                         'long': _longitude,
                                       },
                                     ),
-                                    avatarText: _getInitials(req.user!.name!),
-                                    avatarColor: AppColors.primary,
+                                    avatarWidget:
+                                        (req.user?.avatar != null &&
+                                            req.user!.avatar!.isNotEmpty)
+                                        ? CircleAvatar(
+                                            radius: 22,
+                                            backgroundImage: NetworkImage(
+                                              req.user!.avatar!,
+                                            ),
+                                            backgroundColor: const Color(
+                                              0xFFE5E7EB,
+                                            ),
+                                          )
+                                        : Container(
+                                            width: 44,
+                                            height: 44,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              _getInitials(req.user!.name!),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
                                     driverName: req.user!.name!,
                                     rating: req.user!.rating!.toString(),
                                     totalPrice:
                                         '${req.currency} ${req.price!.toStringAsFixed(0)}',
                                     yourEarnings:
-                                        '${req.currency} ${(req.price! * 0.85).toStringAsFixed(0)}',
+                                        '${req.currency} ${req.amountGoesToDriver}',
                                     pickup: req.pickup!,
                                     dropoff: req.dropOff!.isNotEmpty
                                         ? req.dropOff!.first
@@ -237,9 +278,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                     isUrgent:
                                         req.label?.toLowerCase() == 'urgent',
-                                    earningsPercent: '85% goes to you',
+                                    earningsPercent:
+                                        '${req.amountGoesToDriverPercentage?.toInt()}% goes to you',
                                     platformFee:
-                                        '${req.currency} ${(req.price! * 0.15).toStringAsFixed(0)}',
+                                        '${req.currency} ${req.platformFees}',
+                                    dateOfRequest: req.dateOfRequest ?? '',
                                   ),
                                 ),
                               ),
@@ -538,6 +581,15 @@ class _HomeScreenState extends State<HomeScreen> {
               value: _isOnline,
               onChanged: (value) {
                 setState(() => _isOnline = value);
+                context.read<ProfileCubit>().updateDriverBasicInfo(
+                  DriverBasicInfoEntity(
+                    id: null,
+                    name: null,
+                    email: null,
+                    phone: null,
+                    isOnline: _isOnline,
+                  ),
+                );
                 if (activeTripId.isNotEmpty) {
                   context.read<DriverTripCubit>().getDriverTripById(
                     int.parse(activeTripId),
@@ -552,6 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   // ── Category Icon Helper ─────────────────────────────────────────────────────
 
   IconData _getCategoryIcon(String typeOfGoods) {
@@ -602,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 12),
           ...List.generate(
-            2,
+            4,
             (_) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Container(
@@ -635,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: Colors.black,
@@ -644,7 +697,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 4),
           Text(
             description,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF9CA3AF),
               fontWeight: FontWeight.bold,
@@ -834,7 +887,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -844,9 +897,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          activeTrip.subStatus != 'picked_up'
-                              ? 'Navigate to Pickup'
-                              : 'Navigate to Deliver',
+                          'Navigate to Pickup',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -885,13 +936,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF5F7FA),
                           borderRadius: BorderRadius.circular(14),
-                          // border: Border.all(
-                          //   color: hasPhone
-                          //       ? AppColors.primary
-                          //       : const Color(0xFFE5E7EB),
-                          // ),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -899,7 +945,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.black,
                               size: 18,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               'Call Customer',
                               style: TextStyle(
@@ -965,7 +1011,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         } else {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
       },
     );
@@ -1085,8 +1131,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ── Trip Card ────────────────────────────────────────────────────────────────
 
   Widget _buildTripCard({
-    required String avatarText,
-    required Color avatarColor,
+    required Widget avatarWidget,
     required String driverName,
     required String rating,
     required String totalPrice,
@@ -1100,6 +1145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isUrgent,
     required String earningsPercent,
     required String platformFee,
+    required String dateOfRequest,
     required VoidCallback onClick,
   }) {
     return InkWell(
@@ -1125,23 +1171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: avatarColor,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          avatarText,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+                      avatarWidget,
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -1190,7 +1220,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             'Total Price',
                             style: TextStyle(
                               fontSize: 10,
-                              color: Color(0xFF9CA3AF),
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -1206,14 +1237,38 @@ class _HomeScreenState extends State<HomeScreen> {
                             'Your Earnings',
                             style: TextStyle(
                               fontSize: 10,
-                              color: Color(0xFF9CA3AF),
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 12,
+                            color: Colors.black,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _formatDate(dateOfRequest),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   _buildLocationRow(
                     icon: Icons.circle,
                     iconColor: const Color(0xFF22C55E),
@@ -1235,6 +1290,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icons.navigation_outlined,
                           distance,
                           'Distance',
+                          AppColors.primary,
+                          AppColors.primary.withOpacity(0.1),
                         ),
                       ),
                       Expanded(
@@ -1242,10 +1299,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icons.access_time_outlined,
                           time,
                           'Time',
+                          AppColors.secondary,
+                          AppColors.secondary.withOpacity(0.1),
                         ),
                       ),
                       Expanded(
-                        child: _buildStatChip(categoryIcon, category, ''),
+                        child: _buildStatChip(
+                          categoryIcon,
+                          category,
+                          '',
+                          AppColors.greenColor,
+                          AppColors.greenColor.withOpacity(0.1),
+                        ),
                       ),
                     ],
                   ),
@@ -1280,29 +1345,51 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            // ── Bottom Earnings Bar ─────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
-                color: Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
+                color: AppColors.noteCardColor,
+                borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.trending_up_rounded,
-                    size: 14,
-                    color: Color(0xFF22C55E),
+                    size: 18,
+                    color: AppColors.primary,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '$earningsPercent  •  Platform fee: $platformFee',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF6B7280),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: earningsPercent,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: '  •  Platform fee: ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: platformFee,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1348,6 +1435,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1A1A2E),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1356,29 +1445,45 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatChip(IconData icon, String value, String label) {
+  Widget _buildStatChip(
+    IconData icon,
+    String value,
+    String label,
+    Color iconColor,
+    Color containerColor,
+  ) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-            overflow: TextOverflow.ellipsis,
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: containerColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 14, color: iconColor),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (label.isNotEmpty)
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.black),
+                ),
+            ],
           ),
         ),
-        if (label.isNotEmpty) ...[
-          const SizedBox(width: 2),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -1494,7 +1599,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           );
         } else {
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }
       },
     );
@@ -1576,5 +1681,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '—';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final requestDate = DateTime(date.year, date.month, date.day);
+
+      if (requestDate == today) {
+        return 'Today';
+      } else {
+        return DateFormat('dd MMM yyyy').format(date);
+      }
+    } catch (e) {
+      return dateStr;
+    }
   }
 }

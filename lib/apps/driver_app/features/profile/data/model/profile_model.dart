@@ -46,6 +46,7 @@ class DriverBasicInfoModel extends DriverBasicInfoEntity {
     required super.name,
     required super.email,
     required super.phone,
+    required super.isOnline,
   });
 
   factory DriverBasicInfoModel.fromJson(Map<String, dynamic> json) {
@@ -54,11 +55,18 @@ class DriverBasicInfoModel extends DriverBasicInfoEntity {
       name: json['name'],
       email: json['email'],
       phone: json['phone'],
+      isOnline: json['onine'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'email': email, 'phone': phone};
+    return {
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (isOnline != null) 'online': isOnline,
+    };
   }
 
   // from entity
@@ -68,6 +76,7 @@ class DriverBasicInfoModel extends DriverBasicInfoEntity {
       name: entity.name,
       email: entity.email,
       phone: entity.phone,
+      isOnline: entity.isOnline,
     );
   }
 }

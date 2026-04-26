@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
@@ -242,6 +243,31 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
             ),
           ),
 
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 12,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formatDate(request.createdAt),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
           const SizedBox(height: 16),
 
           // ── Pickup ──────────────────────────────────────────────
@@ -280,7 +306,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
               Expanded(
                 child: _buildStatBlock(
                   'Distance',
-                  '${request.distanceInkm ?? 0} km',
+                  '${(request.distanceInkm ?? 0).toInt()} km',
                   const Color(0xFF1A1A2E),
                 ),
               ),
@@ -799,5 +825,18 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime? dateTime) {
+    if (dateTime == null) return 'N/A';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateToCheck = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    if (dateToCheck == today) {
+      return 'Today';
+    } else {
+      return DateFormat('dd MMM yyyy').format(dateTime);
+    }
   }
 }

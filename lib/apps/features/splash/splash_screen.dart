@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wasel_driver/apps/core/di/app_service_locator.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
@@ -81,25 +82,99 @@ class _SplashScreenState extends State<SplashScreen> {
         }
         break;
       case 'approved':
-        // TODO: replace with actual home screen route when ready
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRouteNames.mainShellScreen,
           (route) => false,
         );
         break;
-      case 'rejected':
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRouteNames.driverCancelledScreen,
-          (route) => false,
-          arguments: state.driverAccountStatus?.rejectionReason ?? '',
-        );
-        break;
       default:
-        // Fallback: unknown status → go to login
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil(AppRouteNames.loginScreen, (route) => false);
     }
+  }
+
+  void _showAccountStatusDialog(String title, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFE8A020)),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            height: 1.5,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRouteNames.loginScreen,
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final Uri uri = Uri.parse("https://wa.me/201021118492");
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Support',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -137,6 +212,29 @@ class _SplashScreenState extends State<SplashScreen> {
             Navigator.of(context).pushNamedAndRemoveUntil(
               AppRouteNames.onboardingScreen,
               (route) => false,
+            );
+          } else if (state.getDriverAccountStatusErrorMessage != null &&
+              (state.getDriverAccountStatusErrorMessage!.contains(
+                    'suspended',
+                  ) ||
+                  state.getDriverAccountStatusErrorMessage!.contains(
+                    'blocked',
+                  ) ||
+                  state.getDriverAccountStatusErrorMessage!.contains(
+                    'denied',
+                  ) ||
+                  state.getDriverAccountStatusErrorMessage!.contains(
+                    'rejected',
+                  ) ||
+                  state.getDriverAccountStatusErrorMessage!.contains(
+                    'reject',
+                  ) ||
+                  state.getDriverAccountStatusErrorMessage!.contains(
+                    'deleted',
+                  ))) {
+            _showAccountStatusDialog(
+              'ACCOUNT WARNING',
+              state.getDriverAccountStatusErrorMessage ?? '',
             );
           } else {
             if (!context.mounted) return;
