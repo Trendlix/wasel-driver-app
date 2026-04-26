@@ -137,15 +137,29 @@ class _HomeScreenState extends State<HomeScreen> {
         BlocListener<HomeCubit, HomeStates>(
           listenWhen: (previous, current) =>
               previous.getDriverProfileRequestStatus !=
-                  current.getDriverProfileRequestStatus &&
-              current.getDriverProfileRequestStatus == RequestStatus.success,
+              current.getDriverProfileRequestStatus,
           listener: (context, state) {
-            if (state.driverProfileModel != null) {
-              setState(() {
-                _isOnline =
-                    (state.driverProfileModel?.isOnline ?? false) &&
-                    _networkStatus == NetworkStatus.online;
-              });
+            if (state.getDriverProfileRequestStatus == RequestStatus.success) {
+              if (state.driverProfileModel != null) {
+                setState(() {
+                  _isOnline = (state.driverProfileModel?.isOnline ?? false) &&
+                      _networkStatus == NetworkStatus.online;
+                });
+              }
+            } else if (state.getDriverProfileRequestStatus ==
+                RequestStatus.error) {
+              if (state.errorMessage != null &&
+                  (state.errorMessage!.contains('suspended') ||
+                      state.errorMessage!.contains('blocked') ||
+                      state.errorMessage!.contains('denied') ||
+                      state.errorMessage!.contains('rejected') ||
+                      state.errorMessage!.contains('reject') ||
+                      state.errorMessage!.contains('deleted'))) {
+                _showAccountStatusDialog(
+                  'ACCOUNT WARNING',
+                  state.errorMessage ?? '',
+                );
+              }
             }
           },
         ),
@@ -1699,5 +1713,88 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  void _showAccountStatusDialog(String title, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFE8A020)),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            height: 1.5,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRouteNames.loginScreen,
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final Uri uri = Uri.parse("https://wa.me/201021118492");
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Support',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
