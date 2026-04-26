@@ -7,7 +7,10 @@ class GetNotificationsUsecase {
 
   GetNotificationsUsecase(this._notificationRepository);
 
-  Future<Either<String, List<NotificationEntity>>> call() {
-    return _notificationRepository.getNotifications();
+  Future<Either<String, List<NotificationEntity>>> call({
+    required int page,
+    required int limit,
+  }) {
+    return _notificationRepository.getNotifications(page: page, limit: limit);
   }
 }

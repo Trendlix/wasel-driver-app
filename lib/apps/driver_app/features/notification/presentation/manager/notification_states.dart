@@ -8,6 +8,10 @@ class NotificationStates extends Equatable {
   final String? getNotificationsErrorMessage;
   final List<NotificationEntity>? notifications;
   final int? notificationNotReadLength;
+  final int currentPage;
+  final bool hasMore;
+  final RequestStatus getMoreNotificationsRequestStatus;
+
   // mark all notifications as read states
   final RequestStatus? markAllNotificationsAsReadRequestStatus;
   final String? markAllNotificationsAsReadErrorMessage;
@@ -18,6 +22,9 @@ class NotificationStates extends Equatable {
     this.getNotificationsErrorMessage,
     this.notifications,
     this.notificationNotReadLength,
+    this.currentPage = 1,
+    this.hasMore = true,
+    this.getMoreNotificationsRequestStatus = RequestStatus.initial,
     // mark all notifications as read states
     this.markAllNotificationsAsReadRequestStatus,
     this.markAllNotificationsAsReadErrorMessage,
@@ -29,6 +36,9 @@ class NotificationStates extends Equatable {
     String? getNotificationsErrorMessage,
     List<NotificationEntity>? notifications,
     int? notificationNotReadLength,
+    int? currentPage,
+    bool? hasMore,
+    RequestStatus? getMoreNotificationsRequestStatus,
     // mark all notifications as read states
     RequestStatus? markAllNotificationsAsReadRequestStatus,
     String? markAllNotificationsAsReadErrorMessage,
@@ -42,6 +52,10 @@ class NotificationStates extends Equatable {
       notifications: notifications ?? this.notifications,
       notificationNotReadLength:
           notificationNotReadLength ?? this.notificationNotReadLength,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      getMoreNotificationsRequestStatus: getMoreNotificationsRequestStatus ??
+          this.getMoreNotificationsRequestStatus,
       // mark all notifications as read states
       markAllNotificationsAsReadRequestStatus:
           markAllNotificationsAsReadRequestStatus ??
@@ -59,6 +73,9 @@ class NotificationStates extends Equatable {
     getNotificationsErrorMessage,
     notifications,
     notificationNotReadLength,
+    currentPage,
+    hasMore,
+    getMoreNotificationsRequestStatus,
     // mark all notifications as read states
     markAllNotificationsAsReadRequestStatus,
     markAllNotificationsAsReadErrorMessage,

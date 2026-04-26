@@ -9,8 +9,11 @@ class NotificationRepositoryImp implements NotificationRepository {
   NotificationRepositoryImp(this._notificationApiServiice);
 
   @override
-  Future<Either<String, List<NotificationModel>>> getNotifications() {
-    return _notificationApiServiice.getNotifications();
+  Future<Either<String, List<NotificationModel>>> getNotifications({
+    required int page,
+    required int limit,
+  }) {
+    return _notificationApiServiice.getNotifications(page: page, limit: limit);
   }
 
   @override

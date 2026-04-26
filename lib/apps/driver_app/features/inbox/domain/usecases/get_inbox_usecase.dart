@@ -9,8 +9,12 @@ class GetOffersInboxUsecase {
 
   GetOffersInboxUsecase(this._inboxRepository);
 
-  Future<Either<String, List<OfferEntity>>> call(InboxStatus status) {
-    return _inboxRepository.getOffersInbox(status);
+  Future<Either<String, List<OfferEntity>>> call(
+    InboxStatus status,
+    int page,
+    int limit,
+  ) {
+    return _inboxRepository.getOffersInbox(status, page, limit);
   }
 }
 
@@ -19,8 +23,12 @@ class GetUpdatesInboxUsecase {
 
   GetUpdatesInboxUsecase(this._inboxRepository);
 
-  Future<Either<String, List<UpdateEntity>>> call(InboxStatus status) {
-    return _inboxRepository.getUpdatesInbox(status);
+  Future<Either<String, List<UpdateEntity>>> call(
+    InboxStatus status,
+    int page,
+    int limit,
+  ) {
+    return _inboxRepository.getUpdatesInbox(status, page, limit);
   }
 }
 
@@ -29,7 +37,11 @@ class GetSupportInboxUsecase {
 
   GetSupportInboxUsecase(this._inboxRepository);
 
-  Future<Either<String, List<SupportEntity>>> call(InboxStatus status) {
-    return _inboxRepository.getSupportInbox(status);
+  Future<Either<String, List<SupportEntity>>> call(
+    InboxStatus status,
+    int page,
+    int limit,
+  ) {
+    return _inboxRepository.getSupportInbox(status, page, limit);
   }
 }

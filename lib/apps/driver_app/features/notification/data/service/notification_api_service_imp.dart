@@ -11,9 +11,15 @@ class NotificationApiServiceImp implements NotificationApiServiice {
   NotificationApiServiceImp(this._apiClient);
 
   @override
-  Future<Either<String, List<NotificationModel>>> getNotifications() async {
+  Future<Either<String, List<NotificationModel>>> getNotifications({
+    required int page,
+    required int limit,
+  }) async {
     try {
-      final result = await _apiClient.get(ApiEndpoints.notificationsPath);
+      final result = await _apiClient.get(
+        ApiEndpoints.notificationsPath,
+        queryParameters: {'page': page, 'limit': limit},
+      );
       if (result.isLeft) {
         return Left(result.left);
       } else {

@@ -1,6 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl =
-      'https://develops-sperm-northwest-productions.trycloudflare.com/';
+  static const String baseUrl = 'http://16.171.45.88:3000/';
 
   // api pathes
   static const String registerPath = 'auth/signup';

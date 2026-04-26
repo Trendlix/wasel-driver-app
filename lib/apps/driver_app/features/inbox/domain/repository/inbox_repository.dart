@@ -6,12 +6,20 @@ import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ibox_e
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ticket_status_entity.dart';
 
 abstract class InboxRepository {
-  Future<Either<String, List<OfferEntity>>> getOffersInbox(InboxStatus status);
+  Future<Either<String, List<OfferEntity>>> getOffersInbox(
+    InboxStatus status,
+    int page,
+    int limit,
+  );
   Future<Either<String, List<UpdateEntity>>> getUpdatesInbox(
     InboxStatus status,
+    int page,
+    int limit,
   );
   Future<Either<String, List<SupportEntity>>> getSupportInbox(
     InboxStatus status,
+    int page,
+    int limit,
   );
 
   Future<Either<String, TicketStatusEntity>> initiateChat(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_snackbar_widget.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_text_form_field.dart';
@@ -531,20 +532,27 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           const SizedBox(height: 24),
 
           // ── Request Document Update Button ───────────────────────
-          Container(
-            width: double.infinity,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'Request Document Update',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          InkWell(
+            onTap: () {
+              Navigator.of(
+                context,
+              ).pushReplacementNamed(AppRouteNames.vehicleDocumentsScreen);
+            },
+            child: Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Request Document Update',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),

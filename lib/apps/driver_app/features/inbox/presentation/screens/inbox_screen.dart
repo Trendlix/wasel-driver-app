@@ -26,28 +26,62 @@ class _InboxScreenState extends State<InboxScreen> {
   int selectedTabIndex = 0;
   final Color primaryBlue = AppColors.primary;
   int ticketNumber = 0;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<InboxCubit>().getOffersInbox(InboxStatus.offers);
+        context.read<InboxCubit>().getOffersInbox(InboxStatus.offers, 1, 10);
       }
     });
   }
 
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _fetchMoreData();
+    }
+  }
+
+  void _fetchMoreData() {
+    final cubit = context.read<InboxCubit>();
+    final state = cubit.state;
+
+    if (state.getMoreInboxRequestStatus == RequestStatus.loading) return;
+
+    if (selectedTabIndex == 0 && state.offersHasMore) {
+      cubit.getOffersInbox(InboxStatus.offers, state.offersPage + 1, 10);
+    } else if (selectedTabIndex == 1 && state.supportsHasMore) {
+      cubit.getSupportInbox(InboxStatus.support, state.supportsPage + 1, 10);
+    } else if (selectedTabIndex == 2 && state.updatesHasMore) {
+      cubit.getUpdatesInbox(InboxStatus.updates, state.updatesPage + 1, 10);
+    }
+  }
+
   Future<void> _fetchCurrentTab(int index) async {
     final cubit = context.read<InboxCubit>();
-    if (index == 0) await cubit.getOffersInbox(InboxStatus.offers);
-    if (index == 1) await cubit.getSupportInbox(InboxStatus.support);
-    if (index == 2) await cubit.getUpdatesInbox(InboxStatus.updates);
+    if (index == 0) await cubit.getOffersInbox(InboxStatus.offers, 1, 10);
+    if (index == 1) await cubit.getSupportInbox(InboxStatus.support, 1, 10);
+    if (index == 2) await cubit.getUpdatesInbox(InboxStatus.updates, 1, 10);
   }
 
   void _onTabTapped(int index) {
     if (selectedTabIndex == index) return;
     setState(() => selectedTabIndex = index);
     _fetchCurrentTab(index);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
   }
 
   @override
@@ -159,6 +193,12 @@ class _InboxScreenState extends State<InboxScreen> {
         ? (state.supports ?? [])
         : (state.updates ?? []);
 
+    final bool hasMore = selectedTabIndex == 0
+        ? state.offersHasMore
+        : selectedTabIndex == 1
+        ? state.supportsHasMore
+        : state.updatesHasMore;
+
     return RefreshIndicator(
       onRefresh: () => _fetchCurrentTab(selectedTabIndex),
       child: list.isEmpty
@@ -176,12 +216,70 @@ class _InboxScreenState extends State<InboxScreen> {
               ),
             )
           : ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: list.length,
+              itemCount: list.length + (hasMore ? 1 : 0),
               physics: const AlwaysScrollableScrollPhysics(),
               itemBuilder: (context, index) {
+                if (index == list.length) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child:
+                          state.getMoreInboxRequestStatus ==
+                              RequestStatus.loading
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: primaryBlue,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  "Loading more messages...",
+                                  style: TextStyle(
+                                    color: AppColors.subTitleColor,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : state.getMoreInboxRequestStatus ==
+                                RequestStatus.error
+                          ? InkWell(
+                              onTap: _fetchMoreData,
+                              child: const Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.refresh,
+                                    color: Colors.orange,
+                                    size: 24,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    "Failed to load more. Tap to retry",
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  );
+                }
                 if (selectedTabIndex == 0) {
-                  return _buildOfferCard(list[index] as OfferModel);
+                  return _buildOfferCard(list[index] as OfferEntity);
                 }
                 if (selectedTabIndex == 1) {
                   final support = list as List<SupportEntity>;
@@ -190,7 +288,7 @@ class _InboxScreenState extends State<InboxScreen> {
                     support[index].ticket!.id,
                   );
                 }
-                return _buildUpdateCard(list[index] as UpdateModel);
+                return _buildUpdateCard(list[index] as UpdateEntity);
               },
             ),
     );
@@ -580,7 +678,7 @@ class _InboxScreenState extends State<InboxScreen> {
     );
   }
 
-  Widget _buildUpdateCard(UpdateModel update) {
+  Widget _buildUpdateCard(UpdateEntity update) {
     Color themeColor = update.tag == 'Security'
         ? Colors.red
         : const Color(0xFF63D098);

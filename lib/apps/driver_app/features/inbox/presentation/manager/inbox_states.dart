@@ -9,10 +9,17 @@ import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ticket
 class InboxStates extends Equatable {
   // inbox states
   final RequestStatus? getInboxRequestStatus;
+  final RequestStatus? getMoreInboxRequestStatus;
   final List<OfferEntity>? offers;
   final List<UpdateEntity>? updates;
   final List<SupportEntity>? supports;
   final String? getInboxErrorMessage;
+  final int offersPage;
+  final int updatesPage;
+  final int supportsPage;
+  final bool offersHasMore;
+  final bool updatesHasMore;
+  final bool supportsHasMore;
 
   int get inboxNotReadLength {
     int count = 0;
@@ -52,10 +59,17 @@ class InboxStates extends Equatable {
 
   const InboxStates({
     this.getInboxRequestStatus,
+    this.getMoreInboxRequestStatus,
     this.offers,
     this.updates,
     this.supports,
     this.getInboxErrorMessage,
+    this.offersPage = 1,
+    this.updatesPage = 1,
+    this.supportsPage = 1,
+    this.offersHasMore = true,
+    this.updatesHasMore = true,
+    this.supportsHasMore = true,
     // initate chat states
     this.initiateChatRequestStatus,
     this.initiateChatErrorMessage,
@@ -78,10 +92,17 @@ class InboxStates extends Equatable {
 
   InboxStates copyWith({
     RequestStatus? getInboxRequestStatus,
+    RequestStatus? getMoreInboxRequestStatus,
     List<OfferEntity>? offers,
     List<UpdateEntity>? updates,
     List<SupportEntity>? supports,
     String? getInboxErrorMessage,
+    int? offersPage,
+    int? updatesPage,
+    int? supportsPage,
+    bool? offersHasMore,
+    bool? updatesHasMore,
+    bool? supportsHasMore,
     // initate chat states
     RequestStatus? initiateChatRequestStatus,
     String? initiateChatErrorMessage,
@@ -104,10 +125,18 @@ class InboxStates extends Equatable {
     return InboxStates(
       getInboxRequestStatus:
           getInboxRequestStatus ?? this.getInboxRequestStatus,
+      getMoreInboxRequestStatus:
+          getMoreInboxRequestStatus ?? this.getMoreInboxRequestStatus,
       offers: offers ?? this.offers,
       updates: updates ?? this.updates,
       supports: supports ?? this.supports,
       getInboxErrorMessage: getInboxErrorMessage ?? this.getInboxErrorMessage,
+      offersPage: offersPage ?? this.offersPage,
+      updatesPage: updatesPage ?? this.updatesPage,
+      supportsPage: supportsPage ?? this.supportsPage,
+      offersHasMore: offersHasMore ?? this.offersHasMore,
+      updatesHasMore: updatesHasMore ?? this.updatesHasMore,
+      supportsHasMore: supportsHasMore ?? this.supportsHasMore,
       initiateChatRequestStatus:
           initiateChatRequestStatus ?? this.initiateChatRequestStatus,
       initiateChatErrorMessage:
@@ -137,10 +166,17 @@ class InboxStates extends Equatable {
   @override
   List<Object?> get props => [
     getInboxRequestStatus,
+    getMoreInboxRequestStatus,
     offers,
     updates,
     supports,
     getInboxErrorMessage,
+    offersPage,
+    updatesPage,
+    supportsPage,
+    offersHasMore,
+    updatesHasMore,
+    supportsHasMore,
     // initate chat states
     initiateChatRequestStatus,
     initiateChatErrorMessage,
@@ -173,10 +209,17 @@ class InboxStates extends Equatable {
 
     addIfNotNull('getInbox', getInboxRequestStatus, [
       getInboxRequestStatus,
+      getMoreInboxRequestStatus,
       getInboxErrorMessage,
       offers,
       updates,
       supports,
+      'offersPage: $offersPage',
+      'updatesPage: $updatesPage',
+      'supportsPage: $supportsPage',
+      'offersHasMore: $offersHasMore',
+      'updatesHasMore: $updatesHasMore',
+      'supportsHasMore: $supportsHasMore',
     ]);
 
     addIfNotNull('initiateChat', initiateChatRequestStatus, [

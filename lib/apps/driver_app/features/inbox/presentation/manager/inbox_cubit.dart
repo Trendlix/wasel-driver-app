@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ibox_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_chat_messages_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_inbox_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/initate_chat_usecase.dart';
@@ -26,63 +28,138 @@ class InboxCubit extends Cubit<InboxStates> {
     this._markInboxItemUsecase,
   ) : super(const InboxStates());
 
-  Future<void> getOffersInbox(InboxStatus status) async {
-    emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
-    final result = await _getOffersInboxUsecase(status);
+  Future<void> getOffersInbox(InboxStatus status, int page, int limit) async {
+    if (page == 1) {
+      emit(
+        state.copyWith(
+          getInboxRequestStatus: RequestStatus.loading,
+          getMoreInboxRequestStatus: RequestStatus.initial,
+          offersPage: 1,
+          offersHasMore: true,
+        ),
+      );
+    } else {
+      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
+    }
+
+    final result = await _getOffersInboxUsecase(status, page, limit);
     if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
-          getInboxRequestStatus: RequestStatus.error,
+          getInboxRequestStatus: page == 1
+              ? RequestStatus.error
+              : state.getInboxRequestStatus,
+          getMoreInboxRequestStatus: page > 1
+              ? RequestStatus.error
+              : state.getMoreInboxRequestStatus,
           getInboxErrorMessage: error,
         ),
       ),
-      (offers) => emit(
-        state.copyWith(
-          getInboxRequestStatus: RequestStatus.success,
-          offers: offers,
-        ),
-      ),
+      (offers) {
+        final List<OfferEntity> updatedOffers = page == 1
+            ? offers
+            : [...(state.offers ?? []), ...offers];
+        emit(
+          state.copyWith(
+            getInboxRequestStatus: RequestStatus.success,
+            getMoreInboxRequestStatus: RequestStatus.success,
+            offers: updatedOffers,
+            offersPage: page,
+            offersHasMore: offers.length == limit,
+          ),
+        );
+      },
     );
   }
 
-  Future<void> getUpdatesInbox(InboxStatus status) async {
-    emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
-    final result = await _getUpdatesInboxUsecase(status);
+  Future<void> getUpdatesInbox(InboxStatus status, int page, int limit) async {
+    if (page == 1) {
+      emit(
+        state.copyWith(
+          getInboxRequestStatus: RequestStatus.loading,
+          getMoreInboxRequestStatus: RequestStatus.initial,
+          updatesPage: 1,
+          updatesHasMore: true,
+        ),
+      );
+    } else {
+      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
+    }
+
+    final result = await _getUpdatesInboxUsecase(status, page, limit);
     if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
-          getInboxRequestStatus: RequestStatus.error,
+          getInboxRequestStatus: page == 1
+              ? RequestStatus.error
+              : state.getInboxRequestStatus,
+          getMoreInboxRequestStatus: page > 1
+              ? RequestStatus.error
+              : state.getMoreInboxRequestStatus,
           getInboxErrorMessage: error,
         ),
       ),
-      (updates) => emit(
-        state.copyWith(
-          getInboxRequestStatus: RequestStatus.success,
-          updates: updates,
-        ),
-      ),
+      (updates) {
+        final List<UpdateEntity> updatedUpdates = page == 1
+            ? updates
+            : [...(state.updates ?? []), ...updates];
+        emit(
+          state.copyWith(
+            getInboxRequestStatus: RequestStatus.success,
+            getMoreInboxRequestStatus: RequestStatus.success,
+            updates: updatedUpdates,
+            updatesPage: page,
+            updatesHasMore: updates.length == limit,
+          ),
+        );
+      },
     );
   }
 
-  Future<void> getSupportInbox(InboxStatus status) async {
-    emit(state.copyWith(getInboxRequestStatus: RequestStatus.loading));
-    final result = await _getSupportInboxUsecase(status);
+  Future<void> getSupportInbox(InboxStatus status, int page, int limit) async {
+    if (page == 1) {
+      emit(
+        state.copyWith(
+          getInboxRequestStatus: RequestStatus.loading,
+          getMoreInboxRequestStatus: RequestStatus.initial,
+          supportsPage: 1,
+          supportsHasMore: true,
+        ),
+      );
+    } else {
+      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
+    }
+
+    final result = await _getSupportInboxUsecase(status, page, limit);
     if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
-          getInboxRequestStatus: RequestStatus.error,
+          getInboxRequestStatus: page == 1
+              ? RequestStatus.error
+              : state.getInboxRequestStatus,
+          getMoreInboxRequestStatus: page > 1
+              ? RequestStatus.error
+              : state.getMoreInboxRequestStatus,
           getInboxErrorMessage: error,
         ),
       ),
-      (supports) => emit(
-        state.copyWith(
-          getInboxRequestStatus: RequestStatus.success,
-          supports: supports,
-        ),
-      ),
+      (supports) {
+        final List<SupportEntity> updatedSupports = page == 1
+            ? supports
+            : [...(state.supports ?? []), ...supports];
+        emit(
+          state.copyWith(
+            getInboxRequestStatus: RequestStatus.success,
+            getMoreInboxRequestStatus: RequestStatus.success,
+            supports: updatedSupports,
+            supportsPage: page,
+            supportsHasMore: supports.length == limit,
+          ),
+        );
+      },
     );
   }
 
@@ -209,11 +286,13 @@ class InboxCubit extends Cubit<InboxStates> {
   }
 
   void resetInitiateChatStatus() {
-    emit(state.copyWith(
-      initiateChatRequestStatus: RequestStatus.initial,
-      ticketId: -1,
-      loadingInboxId: -1,
-      chatAction: null,
-    ));
+    emit(
+      state.copyWith(
+        initiateChatRequestStatus: RequestStatus.initial,
+        ticketId: -1,
+        loadingInboxId: -1,
+        chatAction: null,
+      ),
+    );
   }
 }

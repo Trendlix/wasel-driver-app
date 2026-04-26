@@ -12,22 +12,30 @@ class InboxRepositoryImp implements InboxRepository {
   InboxRepositoryImp(this._inboxApiService);
 
   @override
-  Future<Either<String, List<OfferEntity>>> getOffersInbox(InboxStatus status) {
-    return _inboxApiService.getOffersInbox(status);
+  Future<Either<String, List<OfferEntity>>> getOffersInbox(
+    InboxStatus status,
+    int page,
+    int limit,
+  ) {
+    return _inboxApiService.getOffersInbox(status, page, limit);
   }
 
   @override
   Future<Either<String, List<UpdateEntity>>> getUpdatesInbox(
     InboxStatus status,
+    int page,
+    int limit,
   ) {
-    return _inboxApiService.getUpdatesInbox(status);
+    return _inboxApiService.getUpdatesInbox(status, page, limit);
   }
 
   @override
   Future<Either<String, List<SupportEntity>>> getSupportInbox(
     InboxStatus status,
+    int page,
+    int limit,
   ) {
-    return _inboxApiService.getSupportInbox(status);
+    return _inboxApiService.getSupportInbox(status, page, limit);
   }
 
   @override

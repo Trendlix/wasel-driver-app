@@ -16,10 +16,38 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     context.read<NotificationCubit>().getNotifications();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final cubit = context.read<NotificationCubit>();
+    final state = cubit.state;
+
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        state.getMoreNotificationsRequestStatus != RequestStatus.loading &&
+        state.hasMore) {
+      cubit.getNotifications(page: state.currentPage + 1);
+    }
+  }
+
+  void _fetchMore() {
+    final cubit = context.read<NotificationCubit>();
+    final state = cubit.state;
+    cubit.getNotifications(page: state.currentPage + 1);
   }
 
   @override
@@ -93,19 +121,107 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       .where((n) => n.readAt != null)
                       .toList();
 
-                  return ListView(
-                    children: [
-                      // --- New Section ---
-                      if (newNotifications.isNotEmpty) ...[
-                        _buildSectionHeader("New"),
-                        ..._buildNotificationList(newNotifications),
-                      ],
-                      // --- Earlier Section ---
-                      if (earlierNotifications.isNotEmpty) ...[
-                        _buildSectionHeader("Earlier"),
-                        ..._buildNotificationList(earlierNotifications),
-                      ],
-                    ],
+                  final List<dynamic> items = [];
+                  if (newNotifications.isNotEmpty) {
+                    items.add("NEW");
+                    items.addAll(newNotifications);
+                  }
+                  if (earlierNotifications.isNotEmpty) {
+                    items.add("EARLIER");
+                    items.addAll(earlierNotifications);
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        context.read<NotificationCubit>().getNotifications(),
+                    color: AppColors.primary,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: items.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == items.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child:
+                                  state.getMoreNotificationsRequestStatus ==
+                                      RequestStatus.loading
+                                  ? const Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "Loading more notifications...",
+                                          style: TextStyle(
+                                            color: AppColors.subTitleColor,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : state.getMoreNotificationsRequestStatus ==
+                                        RequestStatus.error
+                                  ? InkWell(
+                                      onTap: _fetchMore,
+                                      child: const Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.refresh,
+                                            color: Colors.orange,
+                                            size: 24,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            "Failed to load more. Tap to retry",
+                                            style: TextStyle(
+                                              color: Colors.orange,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          );
+                        }
+
+                        final item = items[index];
+                        if (item == "NEW") {
+                          return _buildSectionHeader("New");
+                        } else if (item == "EARLIER") {
+                          return _buildSectionHeader("Earlier");
+                        } else {
+                          final notification = item as NotificationEntity;
+                          final isOffer =
+                              notification.type.toLowerCase() == 'offer';
+                          return _buildNotificationTile(
+                            icon: isOffer ? Icons.local_offer : Icons.update,
+                            iconColor: isOffer
+                                ? const Color(0xFFF15A24)
+                                : const Color(0xFF2E5AAC),
+                            title: notification.title,
+                            subtitle: notification.description,
+                            time: isOffer
+                                ? "${notification.createdAt.day}/${notification.createdAt.month}"
+                                : "",
+                            isRead: notification.readAt != null,
+                          );
+                        }
+                      },
+                    ),
                   );
                 },
               ),
@@ -114,30 +230,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ),
       ),
     );
-  }
-
-  List<Widget> _buildNotificationList(List<NotificationEntity> notifications) {
-    List<Widget> tiles = [];
-
-    for (var notification in notifications) {
-      final isOffer = notification.type.toLowerCase() == 'offer';
-
-      tiles.add(
-        _buildNotificationTile(
-          icon: isOffer ? Icons.local_offer : Icons.update,
-          iconColor: isOffer
-              ? const Color(0xFFF15A24)
-              : const Color(0xFF2E5AAC),
-          title: notification.title,
-          subtitle: notification.description,
-          time: isOffer
-              ? "${notification.createdAt.day}/${notification.createdAt.month}"
-              : "",
-          isRead: notification.readAt != null,
-        ),
-      );
-    }
-    return tiles;
   }
 
   Widget _buildShimmerLoading() {

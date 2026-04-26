@@ -22,6 +22,9 @@ class PickupConfirmedBottomSheet extends StatelessWidget {
     weight: trip.weight,
     distanceBetween: trip.distanceBetween,
     date: trip.date,
+    totalWeight: trip.totalWeight,
+    platformFees: trip.platformFees,
+    amountGoesToDriver: trip.amountGoesToDriver,
   );
   static void show(BuildContext context, TripEntity trip) {
     showModalBottomSheet(

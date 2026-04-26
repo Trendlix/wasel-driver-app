@@ -16,11 +16,12 @@ class TripsScreen extends StatefulWidget {
 }
 
 class _TripsScreenState extends State<TripsScreen> {
-  // "ALL" is always index 0, rest are dynamic statuses
+  // "ALL" is always index 0, rest are static categories
   String _selectedStatus = 'ALL';
 
-  // Ordered list of statuses to show (if they exist in the data)
-  static const List<String> _statusOrder = [
+  // Static list of categories to show
+  static const List<String> _staticTabs = [
+    'ALL',
     'ACTIVE',
     'PENDING',
     'SCHEDULED',
@@ -28,17 +29,6 @@ class _TripsScreenState extends State<TripsScreen> {
     'CANCELLED',
     'EXPIRED',
   ];
-
-  /// Returns tabs that actually have trips, always starting with "All"
-  List<String> _getAvailableTabs(List<TripEntity> trips) {
-    final presentStatuses = trips.map((t) => t.status.toUpperCase()).toSet();
-
-    final dynamicTabs = _statusOrder
-        .where((s) => presentStatuses.contains(s))
-        .toList();
-
-    return ['ALL', ...dynamicTabs];
-  }
 
   List<TripEntity> _getFilteredTrips(List<TripEntity> trips) {
     if (_selectedStatus == 'ALL') return trips;
@@ -94,15 +84,7 @@ class _TripsScreenState extends State<TripsScreen> {
                 } else if (state.getDriverTripsStatus ==
                     RequestStatus.success) {
                   final trips = state.trips ?? [];
-                  final availableTabs = _getAvailableTabs(trips);
                   final filteredTrips = _getFilteredTrips(trips);
-
-                  // Reset selected tab if it no longer exists in available tabs
-                  if (!availableTabs.contains(_selectedStatus)) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      setState(() => _selectedStatus = 'ALL');
-                    });
-                  }
 
                   return RefreshIndicator(
                     color: AppColors.primary,
@@ -117,7 +99,7 @@ class _TripsScreenState extends State<TripsScreen> {
                           const SizedBox(height: 16),
                           _buildStatsRow(trips),
                           const SizedBox(height: 16),
-                          _buildFilterTabs(trips, availableTabs),
+                          _buildFilterTabs(trips, _staticTabs),
                           const SizedBox(height: 16),
                           if (filteredTrips.isEmpty)
                             _buildEmptyRequests()

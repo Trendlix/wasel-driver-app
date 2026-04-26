@@ -5,10 +5,20 @@ import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_mod
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/ticket_model.dart';
 
 abstract class InboxApiService {
-  Future<Either<String, List<OfferModel>>> getOffersInbox(InboxStatus status);
-  Future<Either<String, List<UpdateModel>>> getUpdatesInbox(InboxStatus status);
+  Future<Either<String, List<OfferModel>>> getOffersInbox(
+    InboxStatus status,
+    int page,
+    int limit,
+  );
+  Future<Either<String, List<UpdateModel>>> getUpdatesInbox(
+    InboxStatus status,
+    int page,
+    int limit,
+  );
   Future<Either<String, List<SupportModel>>> getSupportInbox(
     InboxStatus status,
+    int page,
+    int limit,
   );
 
   Future<Either<String, TicketStatusModel>> initiateChat(

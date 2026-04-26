@@ -16,11 +16,13 @@ class InboxApiServiceImp implements InboxApiService {
   @override
   Future<Either<String, List<OfferModel>>> getOffersInbox(
     InboxStatus status,
+    int page,
+    int limit,
   ) async {
     try {
       final result = await _apiClient.get(
         ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name},
+        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -44,11 +46,13 @@ class InboxApiServiceImp implements InboxApiService {
   @override
   Future<Either<String, List<UpdateModel>>> getUpdatesInbox(
     InboxStatus status,
+    int page,
+    int limit,
   ) async {
     try {
       final result = await _apiClient.get(
         ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name},
+        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -72,11 +76,13 @@ class InboxApiServiceImp implements InboxApiService {
   @override
   Future<Either<String, List<SupportModel>>> getSupportInbox(
     InboxStatus status,
+    int page,
+    int limit,
   ) async {
     try {
       final result = await _apiClient.get(
         ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name},
+        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
