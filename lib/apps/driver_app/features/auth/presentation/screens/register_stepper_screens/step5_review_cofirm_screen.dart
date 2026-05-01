@@ -101,12 +101,8 @@ class _Step5ReviewConfirmScreenState extends State<Step5ReviewConfirmScreen> {
 
                         final model = RegisterDriverModel(
                           fullName: state.fullName,
-                          nationalIdExpiry:
-                              DateTime.tryParse(state.nationalIdExpiry ?? '') ??
-                              DateTime.now(),
-                          licenseExpiry:
-                              DateTime.tryParse(state.licenseExpiry ?? '') ??
-                              DateTime.now(),
+                          nationalIdExpiry: state.nationalIdExpiry ?? '',
+                          licenseExpiry: state.licenseExpiry ?? '',
                           truckTypeId: int.parse(state.truckTypeId),
                           truckModel: state.truckModel,
                           year: int.tryParse(state.year) ?? 0,

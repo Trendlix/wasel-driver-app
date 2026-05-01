@@ -8,4 +8,5 @@ class AppConstants {
   static const String keyLat = 'user-lat';
   static const String keyLong = 'user-long';
   static const String isFirstTimeKey = 'is-first-time';
+  static const String driverAccountStatusKey = 'driver-account-status';
 }

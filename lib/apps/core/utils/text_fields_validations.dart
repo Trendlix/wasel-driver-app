@@ -53,15 +53,29 @@ class TextFieldsValidations {
       return 'Phone number must contain only digits';
     }
 
+    // Prevent fully repetitive numbers
+    final repetitiveRegex = RegExp(r'^([0-9])\1+$');
+    if (repetitiveRegex.hasMatch(value)) {
+      return 'Enter a valid phone number';
+    }
+
     if (value.startsWith('0')) {
       // Exact check for 11 digits when starting with 0
       if (value.length != 11) {
         return 'Phone number must be exactly 11 digits when starting with 0';
       }
+      // Egyptian mobile networks prefixes with 0
+      if (!RegExp(r'^01[0125][0-9]{8}$').hasMatch(value)) {
+        return 'Enter a valid Egyptian phone number';
+      }
     } else {
       // Exact check for 10 digits when not starting with 0
       if (value.length != 10) {
         return 'Phone number must be exactly 10 digits';
+      }
+      // Egyptian mobile networks prefixes without 0
+      if (!RegExp(r'^1[0125][0-9]{8}$').hasMatch(value)) {
+        return 'Enter a valid Egyptian phone number';
       }
     }
 

@@ -11,7 +11,7 @@ class PermissionService {
   static Future<PermissionStatus> requestLocation() async {
     final status = await Permission.locationWhenInUse.request();
 
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       await _fetchAndSaveLocation();
     }
 
@@ -21,15 +21,26 @@ class PermissionService {
   /// Fetch current position and persist to SharedPreferences
   static Future<void> _fetchAndSaveLocation() async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+      } catch (e) {
+        // Fallback for iOS simulator or when location is hard to determine quickly
+        position = await Geolocator.getLastKnownPosition();
+      }
 
-      final prefs = GetIt.instance<LocalStorageService>();
-      await prefs.saveLat(position.latitude);
-      await prefs.saveLong(position.longitude);
+      if (position != null) {
+        final prefs = GetIt.instance<LocalStorageService>();
+        await prefs.saveLat(position.latitude);
+        await prefs.saveLong(position.longitude);
+      } else {
+        debugPrint('Location fetch failed: position is null');
+      }
     } catch (e) {
       // Position fetch failed — silently ignore, permission is still granted
       debugPrint('Location fetch failed: $e');

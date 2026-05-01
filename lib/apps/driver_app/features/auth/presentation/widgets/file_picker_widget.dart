@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 
 class FilePickerField extends StatelessWidget {
@@ -18,15 +19,47 @@ class FilePickerField extends StatelessWidget {
     required this.onFilePicked,
   });
 
-  Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+  Future<void> _showPickerOptions(BuildContext context) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext ctx) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF1A3A6B)),
+                title: const Text('Gallery'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final ImagePicker picker = ImagePicker();
+                  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    onFilePicked(image.path);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file_outlined, color: Color(0xFF1A3A6B)),
+                title: const Text('File'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+                  );
+                  if (result != null && result.files.isNotEmpty) {
+                    onFilePicked(result.files.single.path);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-
-    if (result != null && result.files.isNotEmpty) {
-      onFilePicked(result.files.single.path); // ✅ full path, not .name
-    }
   }
 
   @override
@@ -65,7 +98,7 @@ class FilePickerField extends StatelessWidget {
 
         // ── Picker Box ────────────────────────────────────────────────
         GestureDetector(
-          onTap: _pickFile,
+          onTap: () => _showPickerOptions(context),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -73,7 +106,7 @@ class FilePickerField extends StatelessWidget {
               color: const Color(0xFFF5F7FA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: selectedFileName != null
+                color: (selectedFileName != null && selectedFileName!.isNotEmpty)
                     ? const Color(0xFF22C55E).withOpacity(0.5)
                     : const Color(0xFFE5E7EB),
                 width: 1,
@@ -83,27 +116,42 @@ class FilePickerField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    selectedFileName != null
+                    (selectedFileName != null && selectedFileName!.isNotEmpty)
                         ? selectedFileName!.split('/').last
                         : 'Choose file...',
                     style: TextStyle(
                       fontSize: 14,
-                      color: selectedFileName != null
+                      color: (selectedFileName != null && selectedFileName!.isNotEmpty)
                           ? const Color(0xFF1A1A2E)
                           : const Color(0xFF9CA3AF),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
-                  selectedFileName != null
-                      ? Icons.check_circle_outline
-                      : Icons.upload_file_outlined,
-                  size: 18,
-                  color: selectedFileName != null
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFF9CA3AF),
-                ),
+                if (selectedFileName != null && selectedFileName!.isNotEmpty) ...[
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 18,
+                    color: Color(0xFF22C55E),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      onFilePicked(''); // Clear the file
+                    },
+                    child: const Icon(
+                      Icons.close,
+                      size: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                ] else ...[
+                  const Icon(
+                    Icons.upload_file_outlined,
+                    size: 18,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ],
               ],
             ),
           ),

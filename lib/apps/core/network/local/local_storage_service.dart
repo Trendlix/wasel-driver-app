@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:wasel_driver/apps/core/utils/constants/app_constants.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -96,5 +94,18 @@ class LocalStorageService {
 
   Future<String?> getIsFirstTime() async {
     return await _secureStorage.read(key: AppConstants.isFirstTimeKey);
+  }
+
+  Future<void> saveDriverApprovedStatus(bool isApprovedStatus) async {
+    await _secureStorage.write(
+      key: AppConstants.driverAccountStatusKey,
+      value: isApprovedStatus.toString(),
+    );
+  }
+
+  Future<bool?> getDriverAccountStatus() async {
+    return await _secureStorage
+        .read(key: AppConstants.driverAccountStatusKey)
+        ?.then((value) => value == 'true');
   }
 }

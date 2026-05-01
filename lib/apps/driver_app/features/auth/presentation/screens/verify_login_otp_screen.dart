@@ -141,11 +141,22 @@ class _VerifyLoginOtpScreenState extends State<VerifyLoginOtpScreen> {
                   (route) => false,
                 );
               } else if (userState.status == UserAccountStatus.approved.name) {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRouteNames.driverApprovedScreen,
-                  arguments: userState.status,
-                  (route) => false,
-                );
+                final isApprovedCached = await localStorageService
+                    .getDriverAccountStatus();
+                if (!context.mounted) return;
+                if (isApprovedCached != null && isApprovedCached == true) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    AppRouteNames.mainShellScreen,
+                    //arguments: userState.status,
+                    (route) => false,
+                  );
+                } else {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    AppRouteNames.driverApprovedScreen,
+                    arguments: userState.status,
+                    (route) => false,
+                  );
+                }
               }
             }
           } else if (state.otpRequestStatus.isError) {
@@ -237,6 +248,7 @@ class _VerifyLoginOtpScreenState extends State<VerifyLoginOtpScreen> {
                       key: _otpInputKey,
                       fieldErrors: _fieldErrors,
                       onFieldChanged: _onFieldChanged,
+                      onComplete: _verifyOtp,
                     ),
 
                     // ── Error Message ─────────────────────────────────
@@ -379,11 +391,13 @@ class _VerifyLoginOtpScreenState extends State<VerifyLoginOtpScreen> {
 class _OtpInputRow extends StatefulWidget {
   final List<bool> fieldErrors;
   final ValueChanged<int> onFieldChanged;
+  final VoidCallback onComplete;
 
   const _OtpInputRow({
     super.key,
     required this.fieldErrors,
     required this.onFieldChanged,
+    required this.onComplete,
   });
 
   @override
@@ -420,8 +434,13 @@ class _OtpInputRowState extends State<_OtpInputRow> {
 
   void _onChanged(String value, int index) {
     widget.onFieldChanged(index);
-    if (value.isNotEmpty && index < _otpLength - 1) {
-      _focusNodes[index + 1].requestFocus();
+    if (value.isNotEmpty) {
+      if (index < _otpLength - 1) {
+        _focusNodes[index + 1].requestFocus();
+      } else {
+        // Last digit entered, trigger completion
+        widget.onComplete();
+      }
     }
   }
 

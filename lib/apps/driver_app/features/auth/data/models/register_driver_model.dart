@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 
 class RegisterDriverModel {
   final String fullName;
-  final DateTime nationalIdExpiry;
-  final DateTime licenseExpiry;
+  final String nationalIdExpiry;
+  final String licenseExpiry;
   final num truckTypeId;
   final String truckModel;
   final num year;
@@ -44,8 +44,8 @@ class RegisterDriverModel {
   FormData toFormData() {
     final map = <String, dynamic>{
       'full_name': fullName,
-      'national_id_expiry': nationalIdExpiry.toUtc().toIso8601String(),
-      'license_expiry': licenseExpiry.toUtc().toIso8601String(),
+      'national_id_expiry': nationalIdExpiry,
+      'license_expiry': licenseExpiry,
       'truck_type_id': truckTypeId,
       'truck_model': truckModel,
       'year': year,

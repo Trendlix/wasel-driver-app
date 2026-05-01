@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_text_button_widget.dart';
@@ -79,7 +81,10 @@ class DriverApprovedScreen extends StatelessWidget {
 
                   // ── Start Using Wasel Button ─────────────────────────
                   CustomTextButtomWidget(
-                    onClick: () {
+                    onClick: () async {
+                      await GetIt.instance<LocalStorageService>()
+                          .saveDriverApprovedStatus(true);
+                      if (!context.mounted) return;
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRouteNames.mainShellScreen,
                         (route) => false,

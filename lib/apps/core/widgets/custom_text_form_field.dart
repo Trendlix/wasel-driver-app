@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
+  final VoidCallback? onTap;
 
   const CustomTextField({
     super.key,
@@ -26,6 +27,7 @@ class CustomTextField extends StatelessWidget {
     this.onChanged,
     this.inputFormatters = const [],
     this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -37,6 +39,7 @@ class CustomTextField extends StatelessWidget {
       keyboardType: inputType,
       validator: validator,
       onChanged: onChanged,
+      onTap: onTap,
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hint,

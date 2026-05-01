@@ -30,6 +30,40 @@ class _Step2UploadDocumentsScreenState
     _licenseExpiryController = TextEditingController(text: state.licenseExpiry);
   }
 
+  Future<void> _selectDate(
+    BuildContext context,
+    TextEditingController controller,
+    Function(String) onChanged,
+  ) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1A1A2E),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final uiFormattedDate =
+          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      controller.text = uiFormattedDate;
+      onChanged(uiFormattedDate);
+    }
+  }
+
   @override
   void dispose() {
     _nationalIdExpiryController.dispose();
@@ -107,8 +141,12 @@ class _Step2UploadDocumentsScreenState
               CustomTextField(
                 hint: 'YYYY-MM-DD',
                 controller: _nationalIdExpiryController,
-                inputType: TextInputType.datetime,
-                onChanged: cubit.updateNationalIdExpiry,
+                readOnly: true,
+                onTap: () => _selectDate(
+                  context,
+                  _nationalIdExpiryController,
+                  cubit.updateNationalIdExpiry,
+                ),
               ),
               if (state.showErrors &&
                   (state.nationalIdExpiry == null ||
@@ -167,8 +205,12 @@ class _Step2UploadDocumentsScreenState
               CustomTextField(
                 hint: 'YYYY-MM-DD',
                 controller: _licenseExpiryController,
-                inputType: TextInputType.datetime,
-                onChanged: cubit.updateLicenseExpiry,
+                readOnly: true,
+                onTap: () => _selectDate(
+                  context,
+                  _licenseExpiryController,
+                  cubit.updateLicenseExpiry,
+                ),
               ),
               if (state.showErrors &&
                   (state.licenseExpiry == null || state.licenseExpiry!.isEmpty))

@@ -11,6 +11,7 @@ import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/services/network_connectivity_service.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
+import 'package:wasel_driver/apps/core/widgets/custom_snackbar_widget.dart';
 import 'package:wasel_driver/apps/core/widgets/error_retry_widget.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/domain/entities/request_categories_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/presentation/cubit/home_cubit.dart';
@@ -47,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<HomeCubit>().getDriverSummary();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appPermission = await PermissionService.requestLocation();
-      if (appPermission.isGranted) {
+      if (appPermission.isGranted || appPermission.isLimited) {
         final location = await PermissionService.getSavedLocation();
         _latitude = location?.lat.toString() ?? '';
         _longitude = location?.lng.toString() ?? '';
@@ -141,10 +142,19 @@ class _HomeScreenState extends State<HomeScreen> {
           listener: (context, state) {
             if (state.getDriverProfileRequestStatus == RequestStatus.success) {
               if (state.driverProfileModel != null) {
+                final profile = state.driverProfileModel!;
                 setState(() {
-                  _isOnline = (state.driverProfileModel?.isOnline ?? false) &&
+                  _isOnline =
+                      (profile.isOnline ?? false) &&
                       _networkStatus == NetworkStatus.online;
+                  activeTripId = profile.activeTripId?.toString() ?? '';
                 });
+
+                if (activeTripId.isNotEmpty) {
+                  context.read<DriverTripCubit>().getDriverTripById(
+                    int.parse(activeTripId),
+                  );
+                }
               }
             } else if (state.getDriverProfileRequestStatus ==
                 RequestStatus.error) {
@@ -438,9 +448,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else if (state.getDriverProfileRequestStatus ==
                       RequestStatus.success) {
                     final profile = state.driverProfileModel;
-                    activeTripId = profile?.activeTripId == null
-                        ? ''
-                        : profile!.activeTripId!.toString();
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -594,6 +601,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Switch(
               value: _isOnline,
               onChanged: (value) {
+                if (value && activeTripId.isNotEmpty) {
+                  showSnackError(
+                    context,
+                    'You have an active trip now, you will be able to receive new requests once you finish it.',
+                  );
+                  return;
+                }
+
                 setState(() => _isOnline = value);
                 context.read<ProfileCubit>().updateDriverBasicInfo(
                   DriverBasicInfoEntity(
@@ -1048,27 +1063,31 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Icon(icon, size: 18, color: iconColor),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF9CA3AF),
-                letterSpacing: 0.5,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF9CA3AF),
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A2E),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1576,7 +1595,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSpacing: 12,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.7,
+            childAspectRatio: 1.4,
             children: [
               _buildSummaryCard(
                 icon: Icons.attach_money_rounded,
@@ -1642,28 +1661,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
               Icon(icon, size: 16, color: iconColor),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: valueColor,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: valueColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: valueColor,
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: valueColor,
+              ),
             ),
           ),
         ],
@@ -1683,7 +1710,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSpacing: 12,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.7,
+        childAspectRatio: 1.4,
         children: List.generate(
           4,
           (_) => Container(

@@ -16,6 +16,7 @@ class Step1PersonalInfoScreen extends StatefulWidget {
 
 class _Step1PersonalInfoScreenState extends State<Step1PersonalInfoScreen> {
   late TextEditingController _fullNameController;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -45,107 +46,109 @@ class _Step1PersonalInfoScreenState extends State<Step1PersonalInfoScreen> {
               minHeight: MediaQuery.of(context).size.height - 180,
             ),
             child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
 
-                  // ── Section Title ──────────────────────────────────────
-                  const Text(
-                    'Personal Information',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1A2E),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Full Name ──────────────────────────────────────────
-                  _buildFieldLabel('Full Name', isRequired: true),
-                  const SizedBox(height: 8),
-                  CustomTextField(
-                    hint: 'Enter your full name',
-                    controller: _fullNameController,
-                    onChanged: cubit.updateFullName,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Full name is required';
-                      }
-                      return null;
-                    },
-                  ),
-                  // Manual Red Validation Text for Driver Type
-                  if (state.showErrors && state.fullName.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8, left: 4),
-                      child: Text(
-                        'Please enter your full name',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-
-                  // ── Driver Type ────────────────────────────────────────
-                  _buildFieldLabel('Driver Type', isRequired: true),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _DriverTypeCard(
-                        icon: Icons.person_outline,
-                        label: 'Individual Driver',
-                        isSelected: state.driverType == 'individual',
-                        onTap: () => cubit.updateDriverType('individual'),
-                      ),
-                      const SizedBox(width: 12),
-                      _DriverTypeCard(
-                        icon: Icons.business_outlined,
-                        label: 'Company Driver',
-                        isSelected: state.driverType == 'company',
-                        onTap: () => cubit.updateDriverType('company'),
-                      ),
-                    ],
-                  ),
-                  // Manual Red Validation Text for Driver Type
-                  if (state.showErrors && state.driverType == null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8, left: 4),
-                      child: Text(
-                        'Please select a driver type',
-                        style: TextStyle(color: Colors.red, fontSize: 12),
+                    // ── Section Title ──────────────────────────────────────
+                    const Text(
+                      'Personal Information',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A1A2E),
                       ),
                     ),
 
-                  const Spacer(),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // ── Continue Button ────────────────────────────────────
-                  CustomTextButtomWidget(
-                    onClick: () {
-                      // Trigger Form Validation (TextFields)
-                      final isNameValid = state.fullName.isNotEmpty;
-                      // Check Custom fields (Driver Type)
-                      final isTypeValid = state.driverType != null;
+                    // ── Full Name ──────────────────────────────────────────
+                    _buildFieldLabel('Full Name', isRequired: true),
+                    const SizedBox(height: 8),
+                    CustomTextField(
+                      hint: 'Enter your full name',
+                      controller: _fullNameController,
+                      onChanged: cubit.updateFullName,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Full name is required';
+                        }
+                        if (value.trim().length < 2) {
+                          return 'Full name must be at least 2 characters';
+                        }
+                        if (RegExp(r'[0-9]').hasMatch(value)) {
+                          return 'Full name cannot contain numbers';
+                        }
+                        return null;
+                      },
+                    ),
+                    // Manual error for Full Name is handled by the Form validator
+                    const SizedBox(height: 20),
 
-                      if (isNameValid && isTypeValid) {
-                        cubit.nextStep();
-                      } else {
-                        // This triggers the manual error text under cards
-                        cubit.setShowErrors(true);
-                      }
-                    },
-                    btnTitle: 'Continue  >',
-                    btnTitleSize: 16,
-                    btnTitleColor: Colors.white,
-                    buttonColor: AppColors.primary,
-                    borderColor: AppColors.primary,
-                    borderRaduisSize: 14,
-                    borderWidth: 0,
-                  ),
+                    // ── Driver Type ────────────────────────────────────────
+                    _buildFieldLabel('Driver Type', isRequired: true),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _DriverTypeCard(
+                          icon: Icons.person_outline,
+                          label: 'Individual Driver',
+                          isSelected: state.driverType == 'individual',
+                          onTap: () => cubit.updateDriverType('individual'),
+                        ),
+                        const SizedBox(width: 12),
+                        _DriverTypeCard(
+                          icon: Icons.business_outlined,
+                          label: 'Company Driver',
+                          isSelected: state.driverType == 'company',
+                          onTap: () => cubit.updateDriverType('company'),
+                        ),
+                      ],
+                    ),
+                    // Manual Red Validation Text for Driver Type
+                    if (state.showErrors && state.driverType == null)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8, left: 4),
+                        child: Text(
+                          'Please select a driver type',
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
 
-                  const SizedBox(height: 24),
-                ],
+                    const Spacer(),
+                    const SizedBox(height: 24),
+
+                    // ── Continue Button ────────────────────────────────────
+                    CustomTextButtomWidget(
+                      onClick: () {
+                        // Trigger Form Validation (TextFields)
+                        final isNameValid =
+                            _formKey.currentState?.validate() ?? false;
+                        // Check Custom fields (Driver Type)
+                        final isTypeValid = state.driverType != null;
+
+                        if (isNameValid && isTypeValid) {
+                          cubit.nextStep();
+                        } else {
+                          // This triggers the manual error text under cards
+                          cubit.setShowErrors(true);
+                        }
+                      },
+                      btnTitle: 'Continue  >',
+                      btnTitleSize: 16,
+                      btnTitleColor: Colors.white,
+                      buttonColor: AppColors.primary,
+                      borderColor: AppColors.primary,
+                      borderRaduisSize: 14,
+                      borderWidth: 0,
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           ),

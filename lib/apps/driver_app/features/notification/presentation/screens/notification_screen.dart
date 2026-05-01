@@ -91,27 +91,55 @@ class _NotificationScreenState extends State<NotificationScreen> {
             Expanded(
               child: BlocBuilder<NotificationCubit, NotificationStates>(
                 builder: (context, state) {
+                  final notifications = state.notifications;
+
                   // --- Shimmer Loading State ---
                   if (state.getNotificationsRequestStatus ==
-                      RequestStatus.loading) {
+                          RequestStatus.loading &&
+                      (notifications == null || notifications.isEmpty)) {
                     return _buildShimmerLoading();
                   }
 
                   // --- Error State ---
                   if (state.getNotificationsRequestStatus ==
-                      RequestStatus.error) {
-                    return Center(
-                      child: Text(
-                        state.getNotificationsErrorMessage ?? "Error",
+                          RequestStatus.error &&
+                      (notifications == null || notifications.isEmpty)) {
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<NotificationCubit>().getNotifications(),
+                      color: AppColors.primary,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Text(
+                                state.getNotificationsErrorMessage ?? "Error",
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }
 
-                  final notifications = state.notifications;
-
                   // --- Empty State ---
                   if (notifications == null || notifications.isEmpty) {
-                    return const Center(child: Text("No notifications found"));
+                    return RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<NotificationCubit>().getNotifications(),
+                      color: AppColors.primary,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _buildEmptyState(),
+                          ),
+                        ],
+                      ),
+                    );
                   }
 
                   final newNotifications = notifications
@@ -283,9 +311,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 final isLoading =
                     state.markAllNotificationsAsReadRequestStatus ==
                     RequestStatus.loading;
+                final hasUnread =
+                    state.notifications?.any((n) => n.readAt == null) ?? false;
 
                 return TextButton(
-                  onPressed: isLoading
+                  onPressed: (isLoading || !hasUnread)
                       ? null
                       : () => context
                             .read<NotificationCubit>()
@@ -299,10 +329,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             color: AppColors.primary,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           "Mark all as read",
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: hasUnread ? AppColors.primary : Colors.grey,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -417,6 +447,63 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: AppColors.primaryLight,
+                child: Icon(
+                  Icons.notifications_none_outlined,
+                  color: AppColors.primary,
+                  size: 30,
+                ),
+              ),
+              SizedBox(height: 14),
+              Text(
+                "No notifications yet",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "You're all caught up. Pull down to refresh and check for new updates.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: AppColors.subTitleColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
