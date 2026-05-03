@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:either_dart/either.dart';
-import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
-import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/data/models/driver_profile_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/data/models/driver_summary_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/home/data/models/request_categories_model.dart';
@@ -19,14 +17,7 @@ class HomeApiServiceImp implements HomeApiService {
   @override
   Future<Either<String, DriverProfileModel>> getDriverProfile() async {
     try {
-      final token = await GetIt.instance<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('No token found');
-      }
-      final res = await _apiClient!.get(
-        ApiEndpoints.driverAccountStatusPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final res = await _apiClient!.get(ApiEndpoints.driverAccountStatusPath);
       if (res.isLeft) {
         return Left(res.left);
       } else {
@@ -45,14 +36,7 @@ class HomeApiServiceImp implements HomeApiService {
   @override
   Future<Either<String, DriverSummaryModel>> getDriverSummary() async {
     try {
-      final token = await GetIt.instance<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('No token found');
-      }
-      final res = await _apiClient!.get(
-        ApiEndpoints.driverSummaryPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final res = await _apiClient!.get(ApiEndpoints.driverSummaryPath);
       if (res.isLeft) {
         return Left(res.left);
       } else {
@@ -74,14 +58,9 @@ class HomeApiServiceImp implements HomeApiService {
     double driverLong,
   ) async {
     try {
-      final token = await GetIt.instance<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('No token found');
-      }
       final res = await _apiClient!.post(
         ApiEndpoints.driverRequestsPath,
         body: {'driver_lat': driverLat, 'driver_long': driverLong},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       if (res.isLeft) {
         return Left(res.left);
@@ -158,14 +137,9 @@ class HomeApiServiceImp implements HomeApiService {
     double long,
   ) async {
     try {
-      final token = await GetIt.instance<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('No token found');
-      }
       final res = await _apiClient!.post(
         '${ApiEndpoints.driverRequestsPath}/$requestId',
         body: {'driver_lat': lat, 'driver_long': long},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       if (res.isLeft) {
         return Left(res.left);

@@ -4,7 +4,6 @@ import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
-import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
 import 'package:wasel_driver/apps/driver_app/features/settings/data/models/faq_type_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/settings/data/models/terms_condition_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/settings/data/models/ticket_category_model.dart';
@@ -124,14 +123,7 @@ class SettingsApiServiceImpl implements SettingsApiService {
   @override
   Future<Either<String, TermsConditionModel>> getTermsCondition() async {
     try {
-      final token = await GetIt.instance<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.termsAndConditionsPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.termsAndConditionsPath);
       if (result.isLeft) {
         return Left(result.left);
       }

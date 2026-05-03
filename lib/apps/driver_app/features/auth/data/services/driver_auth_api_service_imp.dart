@@ -1,12 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:either_dart/src/either.dart';
-import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
-import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
 import 'package:wasel_driver/apps/driver_app/features/auth/data/models/register_driver_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/auth/data/models/truck_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/auth/data/models/verify_otp_model.dart';
@@ -150,15 +148,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
   Future<Either<String, UserVerificationTypeModel>>
   getDriverAccountStatus() async {
     try {
-      final localStorageService = GetIt.instance<LocalStorageService>();
-      final token = await localStorageService.getToken();
-      if (token == null) {
-        return Left('No token found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.driverAccountStatusPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.driverAccountStatusPath);
       if (result.isLeft) {
         return Left(result.left);
       } else {

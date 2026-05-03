@@ -49,14 +49,7 @@ class ProfileApiServiceImp implements ProfileApiService {
   @override
   Future<Either<String, ProfileModel>> getProfile() async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.getUserProfilePath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.getUserProfilePath);
       if (result.isLeft) {
         return Left(result.left);
       } else {
@@ -255,14 +248,7 @@ class ProfileApiServiceImp implements ProfileApiService {
   @override
   Future<Either<String, DriverBasicInfoModel>> getDriverBasicInfo() async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.driverBasicInfoPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.driverBasicInfoPath);
       if (result.isLeft) {
         return Left(result.left);
       } else {
@@ -282,14 +268,7 @@ class ProfileApiServiceImp implements ProfileApiService {
   @override
   Future<Either<String, DriverLegalInfoModel>> getDriverLegalInfo() async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.driverLegelInfoPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.driverLegelInfoPath);
       if (result.isLeft) {
         return Left(result.left);
       } else {
@@ -311,13 +290,8 @@ class ProfileApiServiceImp implements ProfileApiService {
     DriverBasicInfoModel model,
   ) async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
       final result = await _apiClient.put(
         ApiEndpoints.driverBasicInfoPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
         body: model.toJson(),
       );
       if (result.isLeft) {
@@ -339,14 +313,7 @@ class ProfileApiServiceImp implements ProfileApiService {
   @override
   Future<Either<String, DriverDocumentsModel>> getDriverDocuments() async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
-      final result = await _apiClient.get(
-        ApiEndpoints.getDriverDocumentsPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final result = await _apiClient.get(ApiEndpoints.getDriverDocumentsPath);
       if (result.isLeft) {
         return Left(result.left);
       } else {
@@ -370,10 +337,6 @@ class ProfileApiServiceImp implements ProfileApiService {
     String expiryDate,
   ) async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
       final formData = FormData.fromMap({
         'type': type,
         'expiry_date': expiryDate,
@@ -385,7 +348,6 @@ class ProfileApiServiceImp implements ProfileApiService {
 
       final result = await _apiClient.post(
         ApiEndpoints.getDriverDocumentsPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
         body: formData,
       );
       if (result.isLeft) {
@@ -411,10 +373,6 @@ class ProfileApiServiceImp implements ProfileApiService {
     String expiryDate,
   ) async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
       final formData = FormData.fromMap({
         'expiry_date': expiryDate,
         'file': await MultipartFile.fromFile(
@@ -425,7 +383,6 @@ class ProfileApiServiceImp implements ProfileApiService {
 
       final result = await _apiClient.put(
         '${ApiEndpoints.getDriverDocumentsPath}/$documentId/renew',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
         body: formData,
       );
       if (result.isLeft) {
@@ -447,13 +404,8 @@ class ProfileApiServiceImp implements ProfileApiService {
   @override
   Future<Either<String, bool>> deleteDriverAccount() async {
     try {
-      final token = await serviceLocator<LocalStorageService>().getToken();
-      if (token == null) {
-        return Left('Token not found');
-      }
       final result = await _apiClient.delete(
         ApiEndpoints.deleteDriverAccountPath,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       if (result.isLeft) {
         return Left(result.left);
