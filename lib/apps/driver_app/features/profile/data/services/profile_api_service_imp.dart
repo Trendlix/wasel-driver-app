@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:either_dart/either.dart';
 import 'package:wasel_driver/apps/core/di/app_service_locator.dart';
+import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
 import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
@@ -41,7 +42,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -69,7 +70,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -153,7 +154,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -176,7 +177,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -198,7 +199,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -221,7 +222,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -247,7 +248,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -274,7 +275,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -301,7 +302,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -331,7 +332,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -358,7 +359,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -399,7 +400,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -439,7 +440,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -466,7 +467,7 @@ class ProfileApiServiceImp implements ProfileApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 }

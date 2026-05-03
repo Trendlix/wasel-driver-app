@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/core/routes/app_route_names.dart';
 import 'package:wasel_driver/apps/core/utils/constants/app_colors.dart';
+import 'package:wasel_driver/apps/core/utils/text_fields_validations.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_snackbar_widget.dart';
 import 'package:wasel_driver/apps/core/widgets/custom_text_form_field.dart';
 import 'package:wasel_driver/apps/driver_app/features/profile/domain/entity/profile_entity.dart';
@@ -98,9 +99,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   if (state.getDriverBasicInfoStatus == RequestStatus.success &&
                       state.driverBasicInfoModel != null) {
                     final basicInfo = state.driverBasicInfoModel!;
-                    _nameController.text = basicInfo.name!;
-                    _phoneController.text = basicInfo.phone!;
-                    _emailController.text = basicInfo.email!;
+                    _nameController.text = basicInfo.name ?? '';
+                    _phoneController.text = basicInfo.phone ?? '';
+                    _emailController.text = basicInfo.email ?? '';
                   }
 
                   if (state.getDriverLegalInfoStatus == RequestStatus.success &&
@@ -247,7 +248,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         name: _nameController.text,
                         email: _emailController.text,
                         phone: currentInfo.phone,
-                        isOnline: true, // Phone is read-only
+                        isOnline: true,
                       );
                       context.read<ProfileCubit>().updateDriverBasicInfo(
                         updatedInfo,
@@ -315,6 +316,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 color: Color(0xFF9CA3AF),
               ),
             ),
+            validator: TextFieldsValidations.validatePhoneNumber,
           ),
           const SizedBox(height: 4),
           const Text(
@@ -329,7 +331,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           const SizedBox(height: 8),
           CustomTextField(
             controller: _emailController,
-            hint: 'mohamed.ahmed@gmail.com',
+            hint: 'example@example.com',
             readOnly: !_isEditing,
             inputType: TextInputType.emailAddress,
             prefix: const Padding(
@@ -340,6 +342,12 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 color: Color(0xFF9CA3AF),
               ),
             ),
+            validator:
+                _emailController
+                    .text
+                    .isEmpty // Email is optional
+                ? null
+                : TextFieldsValidations.validateEmail,
           ),
           const SizedBox(height: 4),
           const Text(

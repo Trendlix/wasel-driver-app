@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:either_dart/either.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
+import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/chat_messages_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
@@ -39,7 +40,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -69,7 +70,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -99,7 +100,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -124,7 +125,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -151,7 +152,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -182,7 +183,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -207,7 +208,7 @@ class InboxApiServiceImp implements InboxApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 }

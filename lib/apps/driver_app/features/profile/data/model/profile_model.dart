@@ -63,7 +63,7 @@ class DriverBasicInfoModel extends DriverBasicInfoEntity {
     return {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
-      if (email != null) 'email': email,
+      if (email != null && email!.isNotEmpty) 'email': email,
       if (phone != null) 'phone': phone,
       if (isOnline != null) 'online': isOnline,
     };

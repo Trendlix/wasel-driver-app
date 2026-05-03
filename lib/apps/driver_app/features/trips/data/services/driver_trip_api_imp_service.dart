@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:either_dart/either.dart';
 import 'package:get_it/get_it.dart';
+import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
 import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
@@ -37,7 +38,7 @@ class DriverTripApiImpService implements DriverTripApiService {
           .toList();
       return Right(trips);
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -62,7 +63,7 @@ class DriverTripApiImpService implements DriverTripApiService {
       final trip = TripModel.fromJson(data.data['data']['formattedTrips']);
       return Right(trip);
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -81,7 +82,7 @@ class DriverTripApiImpService implements DriverTripApiService {
       }
       return Right(true);
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -106,7 +107,7 @@ class DriverTripApiImpService implements DriverTripApiService {
         return Left(data.data['message']);
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -141,7 +142,7 @@ class DriverTripApiImpService implements DriverTripApiService {
         return Left(data.data['message']);
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:either_dart/src/either.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
 import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
 import 'package:wasel_driver/apps/core/network/local/local_storage_service.dart';
@@ -38,7 +39,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -78,7 +79,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -108,7 +109,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -141,7 +142,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 
@@ -175,7 +176,7 @@ class DriverAuthApiServiceImp implements DriverAuthApiService {
         }
       }
     } catch (e) {
-      return Left(e.toString());
+      return Left(handleException(e));
     }
   }
 

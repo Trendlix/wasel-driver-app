@@ -55,3 +55,12 @@ ServerException handleDioError(DioException error) {
     //   return const ServerException(_undefinedError);
   }
 }
+
+String handleException(dynamic e) {
+  if (e is TypeError) return 'Invalid data format';
+  if (e is DioException) {
+    return e.response?.data?['message']?.toString() ?? 'Network error';
+  }
+  if (e is FormatException) return 'Invalid format';
+  return 'Something went wrong';
+}

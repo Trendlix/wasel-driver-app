@@ -12,7 +12,7 @@ class TripEntity {
   final String? specialNotes;
   final dynamic distanceBetween;
   final int estimatedTime;
-  final double? rating;
+  final dynamic rating;
   final DateTime? date;
   final dynamic weight;
   final dynamic totalWeight;
