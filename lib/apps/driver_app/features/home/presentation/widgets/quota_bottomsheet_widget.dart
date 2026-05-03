@@ -645,13 +645,22 @@ class _SendQuoteBottomSheetState extends State<SendQuoteBottomSheet> {
                   RequestStatus.loading) {
                 return;
               }
-              final rawText = _customPriceController.text
-                  .replaceAll('EGP', '') // remove currency label
-                  .trim(); // remove whitespace
 
-              final price = double.parse(
-                rawText,
-              ).toInt(); // handle decimals safely
+              int price;
+              if (_selected == _PriceOption.custom) {
+                final rawText = _customPriceController.text
+                    .replaceAll('EGP', '') // remove currency label
+                    .trim(); // remove whitespace
+                if (rawText.isEmpty) {
+                  showError(context, 'Please enter a custom price');
+                  return;
+                }
+                price = double.parse(rawText).toInt();
+              } else if (_selected == _PriceOption.user) {
+                price = widget.price?.toInt() ?? 0;
+              } else {
+                price = widget.suggestedPrice?.toInt() ?? 0;
+              }
 
               _homeCubit.sendDriverOffer(
                 widget.requestId,

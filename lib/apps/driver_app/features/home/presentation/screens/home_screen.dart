@@ -1395,34 +1395,37 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.primary,
                   ),
                   const SizedBox(width: 6),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: earningsPercent,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: earningsPercent,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
                           ),
-                        ),
-                        const TextSpan(
-                          text: '  •  Platform fee: ',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                          const TextSpan(
+                            text: '  •  Platform fee: ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: platformFee,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                          TextSpan(
+                            text: platformFee,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
