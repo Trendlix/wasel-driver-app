@@ -2,12 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:either_dart/either.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/errors/handel_dio_errors.dart';
+import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 import 'package:wasel_driver/apps/core/network/api/api_endpoints.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/chat_messages_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/ticket_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/services/inbox_api_service.dart';
-import 'package:wasel_driver/apps/core/network/api/api_client.dart';
 
 class InboxApiServiceImp implements InboxApiService {
   final ApiClient _apiClient;
@@ -22,8 +22,8 @@ class InboxApiServiceImp implements InboxApiService {
   ) async {
     try {
       final result = await _apiClient.get(
-        ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
+        '${ApiEndpoints.getInboxPath}/${status.name}',
+        queryParameters: {'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -52,8 +52,8 @@ class InboxApiServiceImp implements InboxApiService {
   ) async {
     try {
       final result = await _apiClient.get(
-        ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
+        '${ApiEndpoints.getInboxPath}/${status.name}',
+        queryParameters: {'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -82,8 +82,8 @@ class InboxApiServiceImp implements InboxApiService {
   ) async {
     try {
       final result = await _apiClient.get(
-        ApiEndpoints.getInboxPath,
-        queryParameters: {'type': status.name, 'page': page, 'limit': limit},
+        '${ApiEndpoints.getInboxPath}/${status.name}',
+        queryParameters: {'page': page, 'limit': limit},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -135,7 +135,7 @@ class InboxApiServiceImp implements InboxApiService {
   ) async {
     try {
       final result = await _apiClient.get(
-        '${ApiEndpoints.conversationPath}/$conversationId/messages',
+        '${ApiEndpoints.conversationPath}/$conversationId',
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -157,20 +157,11 @@ class InboxApiServiceImp implements InboxApiService {
   }
 
   @override
-  Future<Either<String, bool>> sendMessage(
-    int conversationId,
-    int senderId,
-    String message,
-    String senderType,
-  ) async {
+  Future<Either<String, bool>> sendMessage(int ticketId, String message) async {
     try {
       final result = await _apiClient.post(
-        '${ApiEndpoints.conversationPath}/$conversationId/message',
-        body: {
-          'senderId': senderId,
-          'content': message,
-          'senderType': senderType,
-        },
+        '${ApiEndpoints.conversationPath}/$ticketId/reply',
+        body: {'content': message},
       );
       if (result.isLeft) {
         return Left(result.left);
@@ -188,14 +179,31 @@ class InboxApiServiceImp implements InboxApiService {
   }
 
   @override
-  Future<Either<String, bool>> markInboxItem(
-    String inboxItemId,
-    bool isSupport,
-  ) async {
+  Future<Either<String, bool>> markAllInboxAsRead(InboxStatus status) async {
     try {
       final result = await _apiClient.patch(
-        ApiEndpoints.markInboxItem,
-        body: {'inboxId': int.parse(inboxItemId), 'isSupport': isSupport},
+        '${ApiEndpoints.getInboxPath}/${status.name}/${ApiEndpoints.markAllInboxAsReadPath}',
+      );
+      if (result.isLeft) {
+        return Left(result.left);
+      } else {
+        final response = result.right as Response;
+        if (response.statusCode == 200) {
+          return Right(true);
+        } else {
+          return Left(response.data['message']);
+        }
+      }
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
+  Future<Either<String, bool>> markInboxAsRead(int ticketId) async {
+    try {
+      final result = await _apiClient.patch(
+        '${ApiEndpoints.getInboxPath}/$ticketId/${ApiEndpoints.markInboxAsReadPath}',
       );
       if (result.isLeft) {
         return Left(result.left);

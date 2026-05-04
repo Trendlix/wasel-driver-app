@@ -8,6 +8,7 @@ class ChatMessagesEntity extends Equatable {
   final List<String> attachments;
   final List<String> attachmentUrls;
   final DateTime createdAt;
+  final bool? isRead;
 
   const ChatMessagesEntity({
     required this.id,
@@ -17,6 +18,7 @@ class ChatMessagesEntity extends Equatable {
     required this.attachments,
     required this.attachmentUrls,
     required this.createdAt,
+    this.isRead = false,
   });
 
   @override
@@ -28,5 +30,6 @@ class ChatMessagesEntity extends Equatable {
     attachments,
     attachmentUrls,
     createdAt,
+    isRead,
   ];
 }

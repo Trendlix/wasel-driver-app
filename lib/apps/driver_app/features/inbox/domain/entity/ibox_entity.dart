@@ -1,13 +1,13 @@
 import 'package:equatable/equatable.dart';
 
 abstract class InboxEntity {
-  final int id;
-  final String title;
-  final String description;
-  final String type;
-  final bool isRead;
+  final int? id;
+  final String? title;
+  final String? description;
+  final String? type;
+  final bool? isRead;
   final DateTime? readAt;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   InboxEntity({
     required this.id,
@@ -21,14 +21,15 @@ abstract class InboxEntity {
 }
 
 class OfferEntity {
-  final int id;
-  final String title;
-  final String description;
-  final String type;
-  final bool isRead;
+  final int? id;
+  final String? title;
+  final String? description;
+  final String? type;
+  final bool? isRead;
   final DateTime? readAt;
-  final DateTime createdAt;
+  final DateTime? createdAt;
   final VoucherEntity? voucher;
+  final int? totalInbox ;
 
   OfferEntity({
     required this.id,
@@ -39,6 +40,7 @@ class OfferEntity {
     this.readAt,
     required this.createdAt,
     this.voucher,
+    this.totalInbox,
   });
 }
 
@@ -63,7 +65,7 @@ class VoucherEntity {
 }
 
 class SupportEntity extends InboxEntity {
-  final String status;
+  final String? status;
   final TicketEntity? ticket;
 
   SupportEntity({

@@ -14,7 +14,7 @@ class ApiEndpoints {
   static const String getAddressesType = 'addres/types';
   static const String addVoucherPath = 'vouchers/add';
   static const String getUserWalletPath = 'wallet/my-wallet';
-  static const String getInboxPath = 'driver/inbox/full-structured';
+  static const String getInboxPath = 'driver-inbox';
   static const String submitTicketPath = 'driver/ticket/request';
   static const String userPreferencesPath = 'driver/prefernces';
   static const String getUserPaymentCardsPath = 'card';
@@ -26,7 +26,7 @@ class ApiEndpoints {
   static const String markAllNotificationsAsReadPath =
       'driver/inbox/mark-all-as-read';
   static const String chatInitiatPath = 'driver/chat/initiate';
-  static const String conversationPath = 'driver/chat/conversation';
+  static const String conversationPath = 'driver/ticket';
   static const String goodsTypesPath = 'goods-types';
   static const String trucksByGoodsTypePath = 'truck-types/goods/';
   static const String suggestPricePath = 'truck-requests/suggested-price';
@@ -71,4 +71,7 @@ class ApiEndpoints {
   static const String deleteDriverAccountPath = 'driver/account';
   static const String driverOfferPath = 'truck-offer';
   static const String markInboxItem = 'driver/inbox/mark-as-read';
+
+  static const String markAllInboxAsReadPath = 'mark-all-read';
+  static const String markInboxAsReadPath = 'read';
 }

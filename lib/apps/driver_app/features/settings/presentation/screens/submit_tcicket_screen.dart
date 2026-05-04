@@ -113,7 +113,7 @@ class _SubmitTicketScreenState extends State<SubmitTicketScreen> {
       body: BlocListener<SettingsCubit, SettingsStates>(
         listener: (context, state) {
           if (state.submitTicketRequestStatus == RequestStatus.success) {
-            Navigator.of(context).pushNamed(
+            Navigator.of(context).pushReplacementNamed(
               AppRouteNames.ticketSuccessScreen,
               arguments: state.ticketNumber,
             );

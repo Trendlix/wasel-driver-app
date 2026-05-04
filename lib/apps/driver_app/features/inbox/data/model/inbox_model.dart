@@ -1,7 +1,7 @@
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ibox_entity.dart';
 
 class UpdateEntity extends InboxEntity {
-  final String tag;
+  final String? tag;
 
   UpdateEntity({
     required super.id,
@@ -25,13 +25,14 @@ class UpdateModel extends UpdateEntity {
     super.readAt,
     required super.createdAt,
     required super.tag,
+    required,
   });
 
   factory UpdateModel.fromJson(Map<String, dynamic> json) {
     return UpdateModel(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
+      description: json['body'],
       type: json['type'],
       isRead: json['is_read'] ?? false,
       readAt: json['read_at'] != null ? DateTime.parse(json['read_at']) : null,
@@ -57,7 +58,7 @@ class OfferModel extends OfferEntity {
     return OfferModel(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
+      description: json['body'],
       type: json['type'],
       isRead: json['is_read'] ?? false,
       readAt: json['read_at'] != null ? DateTime.parse(json['read_at']) : null,
@@ -110,7 +111,7 @@ class SupportModel extends SupportEntity {
     return SupportModel(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
+      description: json['body'],
       // The JSON doesn't provide "type", so we hardcode it for internal logic
       type: json['type'] ?? 'support',
       isRead: json['is_read'] ?? false,

@@ -6,17 +6,7 @@ class SendMessageUsecase {
 
   SendMessageUsecase(this._inboxRepository);
 
-  Future<Either<String, bool>> call(
-    int conversationId,
-    int senderId,
-    String message,
-    String senderType,
-  ) {
-    return _inboxRepository.sendMessage(
-      conversationId,
-      senderId,
-      message,
-      senderType,
-    );
+  Future<Either<String, bool>> call(int ticketId, String message) {
+    return _inboxRepository.sendMessage(ticketId, message);
   }
 }

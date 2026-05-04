@@ -54,25 +54,17 @@ class InboxRepositoryImp implements InboxRepository {
   }
 
   @override
-  Future<Either<String, bool>> sendMessage(
-    int conversationId,
-    int senderId,
-    String message,
-    String senderType,
-  ) {
-    return _inboxApiService.sendMessage(
-      conversationId,
-      senderId,
-      message,
-      senderType,
-    );
+  Future<Either<String, bool>> sendMessage(int ticketId, String message) {
+    return _inboxApiService.sendMessage(ticketId, message);
   }
 
   @override
-  Future<Either<String, bool>> markInboxItem(
-    String inboxItemId,
-    bool isSupport,
-  ) {
-    return _inboxApiService.markInboxItem(inboxItemId, isSupport);
+  Future<Either<String, bool>> markAllInboxAsRead(InboxStatus status) {
+    return _inboxApiService.markAllInboxAsRead(status);
+  }
+
+  @override
+  Future<Either<String, bool>> markInboxAsRead(int ticketId) {
+    return _inboxApiService.markInboxAsRead(ticketId);
   }
 }

@@ -9,6 +9,7 @@ class ChatMessagesModel extends ChatMessagesEntity {
     required super.attachments,
     required super.attachmentUrls,
     required super.createdAt,
+    required super.isRead,
   });
 
   factory ChatMessagesModel.fromJson(Map<String, dynamic> json) {
@@ -21,6 +22,7 @@ class ChatMessagesModel extends ChatMessagesEntity {
       attachments: List<String>.from(json['attachments'] ?? []),
       attachmentUrls: List<String>.from(json['attachments_urls'] ?? []),
       createdAt: DateTime.parse(json['created_at']),
+      isRead: json['isRead'],
     );
   }
 }

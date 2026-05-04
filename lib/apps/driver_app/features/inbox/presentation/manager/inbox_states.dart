@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/chat_messages_entity.dart';
@@ -9,7 +8,6 @@ import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ticket
 class InboxStates extends Equatable {
   // inbox states
   final RequestStatus? getInboxRequestStatus;
-  final RequestStatus? getMoreInboxRequestStatus;
   final List<OfferEntity>? offers;
   final List<UpdateEntity>? updates;
   final List<SupportEntity>? supports;
@@ -20,17 +18,18 @@ class InboxStates extends Equatable {
   final bool offersHasMore;
   final bool updatesHasMore;
   final bool supportsHasMore;
+  final bool isLoadingMore;
 
   int get inboxNotReadLength {
     int count = 0;
     if (offers != null) {
-      count += offers!.where((element) => !element.isRead).length;
+      count += offers!.where((element) => !element.isRead!).length;
     }
     if (updates != null) {
-      count += updates!.where((element) => !element.isRead).length;
+      count += updates!.where((element) => !element.isRead!).length;
     }
     if (supports != null) {
-      count += supports!.where((element) => !element.isRead).length;
+      count += supports!.where((element) => !element.isRead!).length;
     }
     return count;
   }
@@ -45,21 +44,23 @@ class InboxStates extends Equatable {
   final String? initiateChatErrorMessage;
   final TicketStatusEntity? ticketStatusEntity;
   final int? ticketId;
-  final int? loadingInboxId;
-  final ChatAction? chatAction;
+  final String? initiateChatActionId;
 
   // send message states
   final RequestStatus? sendMessageRequestStatus;
   final String? sendMessageErrorMessage;
   final String? lastSentMessage;
 
-  // mark inbox item states
-  final RequestStatus? markInboxItemRequestStatus;
-  final String? markInboxItemErrorMessage;
+  // mark all inboxes
+  final RequestStatus? markAllInboxesRequestStatus;
+  final String? markAllInboxesErrorMessage;
+
+  // mark inbox as read
+  final RequestStatus? markInboxAsReadRequestStatus;
+  final String? markInboxAsReadErrorMessage;
 
   const InboxStates({
     this.getInboxRequestStatus,
-    this.getMoreInboxRequestStatus,
     this.offers,
     this.updates,
     this.supports,
@@ -70,13 +71,13 @@ class InboxStates extends Equatable {
     this.offersHasMore = true,
     this.updatesHasMore = true,
     this.supportsHasMore = true,
+    this.isLoadingMore = false,
     // initate chat states
     this.initiateChatRequestStatus,
     this.initiateChatErrorMessage,
     this.ticketStatusEntity,
     this.ticketId,
-    this.loadingInboxId,
-    this.chatAction,
+    this.initiateChatActionId,
     // chat messages states
     this.getChatMessagesRequestStatus,
     this.chatMessages,
@@ -85,14 +86,16 @@ class InboxStates extends Equatable {
     this.sendMessageRequestStatus,
     this.sendMessageErrorMessage,
     this.lastSentMessage,
-    // mark inbox item states
-    this.markInboxItemRequestStatus,
-    this.markInboxItemErrorMessage,
+    // mark all inboxes states
+    this.markAllInboxesRequestStatus,
+    this.markAllInboxesErrorMessage,
+    // mark inbox as read states
+    this.markInboxAsReadRequestStatus,
+    this.markInboxAsReadErrorMessage,
   });
 
   InboxStates copyWith({
     RequestStatus? getInboxRequestStatus,
-    RequestStatus? getMoreInboxRequestStatus,
     List<OfferEntity>? offers,
     List<UpdateEntity>? updates,
     List<SupportEntity>? supports,
@@ -103,13 +106,13 @@ class InboxStates extends Equatable {
     bool? offersHasMore,
     bool? updatesHasMore,
     bool? supportsHasMore,
+    bool? isLoadingMore,
     // initate chat states
     RequestStatus? initiateChatRequestStatus,
     String? initiateChatErrorMessage,
     TicketStatusEntity? ticketStatusEntity,
     int? ticketId,
-    int? loadingInboxId,
-    ChatAction? chatAction,
+    String? initiateChatActionId,
     // chat messages states
     RequestStatus? getChatMessagesRequestStatus,
     List<ChatMessagesEntity>? chatMessages,
@@ -118,15 +121,16 @@ class InboxStates extends Equatable {
     RequestStatus? sendMessageRequestStatus,
     String? sendMessageErrorMessage,
     String? lastSentMessage,
-    // mark inbox item states
-    RequestStatus? markInboxItemRequestStatus,
-    String? markInboxItemErrorMessage,
+    // mark all inboxes states
+    RequestStatus? markAllInboxesRequestStatus,
+    String? markAllInboxesErrorMessage,
+    // mark inbox as read states
+    RequestStatus? markInboxAsReadRequestStatus,
+    String? markInboxAsReadErrorMessage,
   }) {
     return InboxStates(
       getInboxRequestStatus:
           getInboxRequestStatus ?? this.getInboxRequestStatus,
-      getMoreInboxRequestStatus:
-          getMoreInboxRequestStatus ?? this.getMoreInboxRequestStatus,
       offers: offers ?? this.offers,
       updates: updates ?? this.updates,
       supports: supports ?? this.supports,
@@ -137,36 +141,43 @@ class InboxStates extends Equatable {
       offersHasMore: offersHasMore ?? this.offersHasMore,
       updatesHasMore: updatesHasMore ?? this.updatesHasMore,
       supportsHasMore: supportsHasMore ?? this.supportsHasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      // initate chat states
       initiateChatRequestStatus:
           initiateChatRequestStatus ?? this.initiateChatRequestStatus,
       initiateChatErrorMessage:
           initiateChatErrorMessage ?? this.initiateChatErrorMessage,
       ticketStatusEntity: ticketStatusEntity ?? this.ticketStatusEntity,
-      ticketId: ticketId == -1 ? null : (ticketId ?? this.ticketId),
-      loadingInboxId:
-          loadingInboxId == -1 ? null : (loadingInboxId ?? this.loadingInboxId),
-      chatAction: chatAction ?? this.chatAction,
+      ticketId: ticketId ?? this.ticketId,
+      initiateChatActionId: initiateChatActionId ?? this.initiateChatActionId,
+      // chat messages states
       getChatMessagesRequestStatus:
           getChatMessagesRequestStatus ?? this.getChatMessagesRequestStatus,
       chatMessages: chatMessages ?? this.chatMessages,
       getChatMessagesErrorMessage:
           getChatMessagesErrorMessage ?? this.getChatMessagesErrorMessage,
+      // send message states
       sendMessageRequestStatus:
           sendMessageRequestStatus ?? this.sendMessageRequestStatus,
       sendMessageErrorMessage:
           sendMessageErrorMessage ?? this.sendMessageErrorMessage,
       lastSentMessage: lastSentMessage ?? this.lastSentMessage,
-      markInboxItemRequestStatus:
-          markInboxItemRequestStatus ?? this.markInboxItemRequestStatus,
-      markInboxItemErrorMessage:
-          markInboxItemErrorMessage ?? this.markInboxItemErrorMessage,
+      // mark all inboxes states
+      markAllInboxesRequestStatus:
+          markAllInboxesRequestStatus ?? this.markAllInboxesRequestStatus,
+      markAllInboxesErrorMessage:
+          markAllInboxesErrorMessage ?? this.markAllInboxesErrorMessage,
+      // mark inbox as read states
+      markInboxAsReadRequestStatus:
+          markInboxAsReadRequestStatus ?? this.markInboxAsReadRequestStatus,
+      markInboxAsReadErrorMessage:
+          markInboxAsReadErrorMessage ?? this.markInboxAsReadErrorMessage,
     );
   }
 
   @override
   List<Object?> get props => [
     getInboxRequestStatus,
-    getMoreInboxRequestStatus,
     offers,
     updates,
     supports,
@@ -177,13 +188,13 @@ class InboxStates extends Equatable {
     offersHasMore,
     updatesHasMore,
     supportsHasMore,
+    isLoadingMore,
     // initate chat states
     initiateChatRequestStatus,
     initiateChatErrorMessage,
     ticketStatusEntity,
     ticketId,
-    loadingInboxId,
-    chatAction,
+    initiateChatActionId,
     // chat messages states
     getChatMessagesRequestStatus,
     chatMessages,
@@ -192,9 +203,12 @@ class InboxStates extends Equatable {
     sendMessageRequestStatus,
     sendMessageErrorMessage,
     lastSentMessage,
-    // mark inbox item states
-    markInboxItemRequestStatus,
-    markInboxItemErrorMessage,
+    // mark all inboxes states
+    markAllInboxesRequestStatus,
+    markAllInboxesErrorMessage,
+    // mark inbox as read states
+    markInboxAsReadRequestStatus,
+    markInboxAsReadErrorMessage,
   ];
 
   @override
@@ -209,17 +223,17 @@ class InboxStates extends Equatable {
 
     addIfNotNull('getInbox', getInboxRequestStatus, [
       getInboxRequestStatus,
-      getMoreInboxRequestStatus,
       getInboxErrorMessage,
       offers,
       updates,
       supports,
-      'offersPage: $offersPage',
-      'updatesPage: $updatesPage',
-      'supportsPage: $supportsPage',
-      'offersHasMore: $offersHasMore',
-      'updatesHasMore: $updatesHasMore',
-      'supportsHasMore: $supportsHasMore',
+      offersPage,
+      updatesPage,
+      supportsPage,
+      offersHasMore,
+      updatesHasMore,
+      supportsHasMore,
+      isLoadingMore,
     ]);
 
     addIfNotNull('initiateChat', initiateChatRequestStatus, [
@@ -227,8 +241,7 @@ class InboxStates extends Equatable {
       initiateChatErrorMessage,
       ticketStatusEntity,
       ticketId,
-      loadingInboxId,
-      chatAction,
+      initiateChatActionId,
     ]);
 
     addIfNotNull('getChatMessages', getChatMessagesRequestStatus, [
@@ -243,9 +256,14 @@ class InboxStates extends Equatable {
       lastSentMessage,
     ]);
 
-    addIfNotNull('markInboxItem', markInboxItemRequestStatus, [
-      markInboxItemRequestStatus,
-      markInboxItemErrorMessage,
+    addIfNotNull('markAllInboxes', markAllInboxesRequestStatus, [
+      markAllInboxesRequestStatus,
+      markAllInboxesErrorMessage,
+    ]);
+
+    addIfNotNull('markInboxAsRead', markInboxAsReadRequestStatus, [
+      markInboxAsReadRequestStatus,
+      markInboxAsReadErrorMessage,
     ]);
 
     return activeStates.isEmpty

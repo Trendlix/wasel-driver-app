@@ -16,6 +16,7 @@ import 'package:wasel_driver/apps/driver_app/features/profile/presentation/manag
 
 class InboxScreen extends StatefulWidget {
   final bool isFromProfile;
+
   const InboxScreen({super.key, this.isFromProfile = false});
 
   @override
@@ -25,8 +26,8 @@ class InboxScreen extends StatefulWidget {
 class _InboxScreenState extends State<InboxScreen> {
   int selectedTabIndex = 0;
   final Color primaryBlue = AppColors.primary;
-  int ticketNumber = 0;
   final ScrollController _scrollController = ScrollController();
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -34,7 +35,7 @@ class _InboxScreenState extends State<InboxScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<InboxCubit>().getOffersInbox(InboxStatus.offers, 1, 10);
+        context.read<InboxCubit>().getOffersInbox(InboxStatus.offers);
       }
     });
   }
@@ -47,42 +48,56 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _fetchMoreData();
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels < position.maxScrollExtent - 200) return;
+
+    final cubit = context.read<InboxCubit>();
+    if (selectedTabIndex == 0) {
+      cubit.getOffersInbox(InboxStatus.offers, isLoadMore: true);
+    } else if (selectedTabIndex == 1) {
+      cubit.getSupportInbox(InboxStatus.support, isLoadMore: true);
+    } else {
+      cubit.getUpdatesInbox(InboxStatus.updates, isLoadMore: true);
     }
   }
 
-  void _fetchMoreData() {
+  Future<void> _onRefresh() async {
     final cubit = context.read<InboxCubit>();
-    final state = cubit.state;
-
-    if (state.getMoreInboxRequestStatus == RequestStatus.loading) return;
-
-    if (selectedTabIndex == 0 && state.offersHasMore) {
-      cubit.getOffersInbox(InboxStatus.offers, state.offersPage + 1, 10);
-    } else if (selectedTabIndex == 1 && state.supportsHasMore) {
-      cubit.getSupportInbox(InboxStatus.support, state.supportsPage + 1, 10);
-    } else if (selectedTabIndex == 2 && state.updatesHasMore) {
-      cubit.getUpdatesInbox(InboxStatus.updates, state.updatesPage + 1, 10);
+    if (selectedTabIndex == 0) {
+      await cubit.getOffersInbox(InboxStatus.offers);
+    } else if (selectedTabIndex == 1) {
+      await cubit.getSupportInbox(InboxStatus.support);
+    } else {
+      await cubit.getUpdatesInbox(InboxStatus.updates);
     }
   }
 
-  Future<void> _fetchCurrentTab(int index) async {
+  void _fetchInboxForTab(int index) {
     final cubit = context.read<InboxCubit>();
-    if (index == 0) await cubit.getOffersInbox(InboxStatus.offers, 1, 10);
-    if (index == 1) await cubit.getSupportInbox(InboxStatus.support, 1, 10);
-    if (index == 2) await cubit.getUpdatesInbox(InboxStatus.updates, 1, 10);
+    if (index == 0) cubit.getOffersInbox(InboxStatus.offers);
+    if (index == 1) cubit.getSupportInbox(InboxStatus.support);
+    if (index == 2) cubit.getUpdatesInbox(InboxStatus.updates);
   }
 
   void _onTabTapped(int index) {
     if (selectedTabIndex == index) return;
     setState(() => selectedTabIndex = index);
-    _fetchCurrentTab(index);
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
-    }
+    _fetchInboxForTab(index);
   }
+
+  void _retryCurrentTab() {
+    _fetchInboxForTab(selectedTabIndex);
+  }
+
+  int _readOffersBadgeCount(InboxStates state) =>
+      state.offers?.where((e) => e.isRead != true).length ?? 0;
+
+  int _readSupportsBadgeCount(InboxStates state) =>
+      state.supports?.where((e) => e.isRead != true).length ?? 0;
+
+  int _readUpdatesBadgeCount(InboxStates state) =>
+      state.updates?.where((e) => e.isRead != true).length ?? 0;
 
   @override
   Widget build(BuildContext context) {
@@ -91,12 +106,9 @@ class _InboxScreenState extends State<InboxScreen> {
       appBar: AppBar(
         backgroundColor: primaryBlue,
         elevation: 0,
-        leading: Visibility(
-          visible: widget.isFromProfile,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Inbox",
@@ -114,24 +126,21 @@ class _InboxScreenState extends State<InboxScreen> {
                       0,
                       AppImages.offer,
                       "Offers",
-                      (state.offers?.where((o) => !o.isRead).length ?? 0)
-                          .toString(),
+                      _readOffersBadgeCount(state).toString(),
                     ),
                     const SizedBox(width: 8),
                     _buildTabButton(
                       1,
                       AppImages.chatIcon,
                       "Support",
-                      (state.supports?.where((s) => !s.isRead).length ?? 0)
-                          .toString(),
+                      _readSupportsBadgeCount(state).toString(),
                     ),
                     const SizedBox(width: 8),
                     _buildTabButton(
                       2,
                       AppImages.notificationIcon,
                       "Updates",
-                      (state.updates?.where((u) => !u.isRead).length ?? 0)
-                          .toString(),
+                      _readUpdatesBadgeCount(state).toString(),
                     ),
                   ],
                 ),
@@ -148,7 +157,7 @@ class _InboxScreenState extends State<InboxScreen> {
               AppRouteNames.chatScreen,
               arguments: {
                 'ticket': state.ticketStatusEntity,
-                'ticketId': ticketNumber.toString(),
+                'ticketId': state.ticketId.toString(),
               },
             );
             context.read<InboxCubit>().resetInitiateChatStatus();
@@ -157,17 +166,38 @@ class _InboxScreenState extends State<InboxScreen> {
               context,
               state.initiateChatErrorMessage ?? "something went wrong",
             );
+            context.read<InboxCubit>().resetInitiateChatStatus();
           }
 
-          if (state.markInboxItemRequestStatus == RequestStatus.success) {
-            _fetchCurrentTab(selectedTabIndex);
-            context.read<InboxCubit>().resetMarkInboxItemStatus();
-          } else if (state.markInboxItemRequestStatus == RequestStatus.error) {
+          if (state.markAllInboxesRequestStatus == RequestStatus.success) {
+            _fetchInboxForTab(selectedTabIndex);
+            context.read<InboxCubit>().resetMarkAllInboxesStatus();
+          } else if (state.markAllInboxesRequestStatus == RequestStatus.error) {
             showError(
               context,
-              state.markInboxItemErrorMessage ?? "something went wrong",
+              state.markAllInboxesErrorMessage ?? "something went wrong",
             );
-            context.read<InboxCubit>().resetMarkInboxItemStatus();
+            context.read<InboxCubit>().resetMarkAllInboxesStatus();
+          }
+
+          if (state.markInboxAsReadRequestStatus == RequestStatus.success) {
+            if (!_isRefreshing) {
+              _isRefreshing = true;
+              _fetchInboxForTab(selectedTabIndex);
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted) {
+                  setState(() => _isRefreshing = false);
+                }
+              });
+            }
+            context.read<InboxCubit>().resetMarkInboxAsReadStatus();
+          } else if (state.markInboxAsReadRequestStatus ==
+              RequestStatus.error) {
+            showError(
+              context,
+              state.markInboxAsReadErrorMessage ?? "something went wrong",
+            );
+            context.read<InboxCubit>().resetMarkInboxAsReadStatus();
           }
         },
         builder: (context, state) {
@@ -177,11 +207,60 @@ class _InboxScreenState extends State<InboxScreen> {
           if (state.getInboxRequestStatus == RequestStatus.error) {
             return ErrorRetryWidget(
               message: state.getInboxErrorMessage ?? "Error",
-              onRetry: () => _fetchCurrentTab(selectedTabIndex),
+              onRetry: _retryCurrentTab,
             );
           }
-          return _buildCurrentTabContent(state);
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: _buildCurrentTabContent(state),
+          );
         },
+      ),
+    );
+  }
+
+  Widget _buildMarkAllAsReadRow(InboxStates state) {
+    final hasUnread = selectedTabIndex == 0
+        ? (state.offers?.any((e) => e.isRead != true) ?? false)
+        : selectedTabIndex == 1
+        ? (state.supports?.any((e) => e.isRead != true) ?? false)
+        : (state.updates?.any((e) => e.isRead != true) ?? false);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton.icon(
+            onPressed:
+                !hasUnread ||
+                    state.markAllInboxesRequestStatus == RequestStatus.loading
+                ? null
+                : () {
+                    final status = selectedTabIndex == 0
+                        ? InboxStatus.offers
+                        : selectedTabIndex == 1
+                        ? InboxStatus.support
+                        : InboxStatus.updates;
+                    context.read<InboxCubit>().markAllInboxes(status);
+                  },
+            icon: state.markAllInboxesRequestStatus == RequestStatus.loading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.done_all, size: 20),
+            label: const Text(
+              "Mark all as read",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: primaryBlue,
+              disabledForegroundColor: Colors.grey,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -192,105 +271,36 @@ class _InboxScreenState extends State<InboxScreen> {
         : selectedTabIndex == 1
         ? (state.supports ?? [])
         : (state.updates ?? []);
+    if (list.isEmpty) return _buildEmptyState();
 
-    final bool hasMore = selectedTabIndex == 0
-        ? state.offersHasMore
-        : selectedTabIndex == 1
-        ? state.supportsHasMore
-        : state.updatesHasMore;
-
-    return RefreshIndicator(
-      onRefresh: () => _fetchCurrentTab(selectedTabIndex),
-      child: list.isEmpty
-          ? LayoutBuilder(
-              builder: (context, constraints) => ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  Container(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: _buildEmptyState(),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: list.length + (hasMore ? 1 : 0),
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                if (index == list.length) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Center(
-                      child:
-                          state.getMoreInboxRequestStatus ==
-                              RequestStatus.loading
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: primaryBlue,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  "Loading more messages...",
-                                  style: TextStyle(
-                                    color: AppColors.subTitleColor,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : state.getMoreInboxRequestStatus ==
-                                RequestStatus.error
-                          ? InkWell(
-                              onTap: _fetchMoreData,
-                              child: const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.refresh,
-                                    color: Colors.orange,
-                                    size: 24,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    "Failed to load more. Tap to retry",
-                                    style: TextStyle(
-                                      color: Colors.orange,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  );
-                }
-                if (selectedTabIndex == 0) {
-                  return _buildOfferCard(list[index] as OfferEntity);
-                }
-                if (selectedTabIndex == 1) {
-                  final support = list as List<SupportEntity>;
-                  return _buildSupportCard(
-                    support[index],
-                    support[index].ticket!.id,
-                  );
-                }
-                return _buildUpdateCard(list[index] as UpdateEntity);
-              },
-            ),
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(16),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: list.length + (state.isLoadingMore ? 1 : 0) + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _buildMarkAllAsReadRow(state);
+        }
+        final itemIndex = index - 1;
+        if (itemIndex == list.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (selectedTabIndex == 0) {
+          return _buildOfferCard(list[itemIndex] as OfferModel);
+        }
+        if (selectedTabIndex == 1) {
+          final support = list as List<SupportEntity>;
+          return _buildSupportCard(
+            support[itemIndex],
+            support[itemIndex].ticket!.id,
+          );
+        }
+        return _buildUpdateCard(list[itemIndex] as UpdateModel);
+      },
     );
   }
 
@@ -341,13 +351,14 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildOfferCard(OfferEntity offer) {
-    return InkWell(
-      onTap: () {
-        if (!offer.isRead) {
-          context.read<InboxCubit>().markInboxItem(offer.id.toString(), false);
-        }
-      },
-      borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: offer.isRead == true
+          ? null
+          : () {
+              if (offer.id != null) {
+                context.read<InboxCubit>().markInboxAsRead(offer.id!);
+              }
+            },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -361,22 +372,20 @@ class _InboxScreenState extends State<InboxScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    offer.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
+                Text(
+                  offer.title ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
                   ),
                 ),
-                if (!offer.isRead)
+                if (!offer.isRead!)
                   const Icon(Icons.circle, size: 10, color: Color(0xFF214DA1)),
               ],
             ),
             const SizedBox(height: 6),
             Text(
-              offer.description,
+              offer.description ?? '',
               style: const TextStyle(
                 color: AppColors.subTitleColor,
                 fontWeight: FontWeight.w600,
@@ -398,7 +407,7 @@ class _InboxScreenState extends State<InboxScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      "Valid until ${offer.createdAt.year}",
+                      "Valid until ${offer.createdAt?.year}",
                       style: const TextStyle(
                         color: AppColors.profileSubTitle,
                         fontSize: 12,
@@ -413,13 +422,23 @@ class _InboxScreenState extends State<InboxScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
+                      color: offer.voucher?.discountValue == '100'
+                          ? AppColors.greenLight
+                          : AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      "% ${offer.voucher!.discountValue}",
+                      offer.voucher?.discountValue == '100'
+                          ? '% FREE'
+                          : offer.voucher?.discountType == 'fixed'
+                          ? 'EGP ${offer.voucher!.discountValue}'
+                          : "% ${offer.voucher!.discountValue}",
                       style: TextStyle(
-                        color: primaryBlue,
+                        color: offer.voucher?.discountValue == '100'
+                            ? AppColors.green
+                            : offer.voucher?.discountType == 'fixed'
+                            ? AppColors.primary
+                            : primaryBlue,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -452,16 +471,16 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildSupportCard(SupportEntity support, int ticketId) {
-    bool isNewResponse = !support.isRead;
-    ticketNumber = support.ticket!.id;
-
-    return InkWell(
-      onTap: () {
-        if (!support.isRead) {
-          context.read<InboxCubit>().markInboxItem(support.id.toString(), true);
-        }
-      },
-      borderRadius: BorderRadius.circular(12),
+    bool isNewResponse = !support.isRead!;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: support.isRead == true
+          ? null
+          : () {
+              if (support.id != null) {
+                context.read<InboxCubit>().markInboxAsRead(support.id!);
+              }
+            },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -515,13 +534,11 @@ class _InboxScreenState extends State<InboxScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              support.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                          Text(
+                            support.title ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
                           ),
                           if (isNewResponse)
@@ -534,7 +551,7 @@ class _InboxScreenState extends State<InboxScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        support.description,
+                        support.description ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -553,7 +570,7 @@ class _InboxScreenState extends State<InboxScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            "${support.createdAt.day} Dec, ${support.createdAt.year}",
+                            "${support.createdAt?.day} Dec, ${support.createdAt?.year}",
                             style: const TextStyle(
                               color: AppColors.profileSubTitle,
                               fontSize: 11,
@@ -568,6 +585,7 @@ class _InboxScreenState extends State<InboxScreen> {
               ],
             ),
             const SizedBox(height: 12),
+
             if (support.status == 'reply') ...[
               const SizedBox(height: 12),
               Row(
@@ -578,8 +596,7 @@ class _InboxScreenState extends State<InboxScreen> {
                         context.read<InboxCubit>().initiateChat(
                           support.ticket!.id,
                           context.read<ProfileCubit>().state.profileModel!.id!,
-                          ChatAction.view,
-                          support.id,
+                          actionId: 'view_${support.id}',
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -592,8 +609,7 @@ class _InboxScreenState extends State<InboxScreen> {
                         selector: (state) =>
                             state.initiateChatRequestStatus ==
                                 RequestStatus.loading &&
-                            state.loadingInboxId == support.id &&
-                            state.chatAction == ChatAction.view,
+                            state.initiateChatActionId == 'view_${support.id}',
                         builder: (context, isLoading) {
                           if (isLoading) {
                             return SizedBox(
@@ -624,8 +640,7 @@ class _InboxScreenState extends State<InboxScreen> {
                         context.read<InboxCubit>().initiateChat(
                           support.ticket!.id,
                           context.read<ProfileCubit>().state.profileModel!.id!,
-                          ChatAction.reply,
-                          support.id,
+                          actionId: 'reply_${support.id}',
                         );
                       },
                       icon: Image.asset(
@@ -638,8 +653,7 @@ class _InboxScreenState extends State<InboxScreen> {
                         selector: (state) =>
                             state.initiateChatRequestStatus ==
                                 RequestStatus.loading &&
-                            state.loadingInboxId == support.id &&
-                            state.chatAction == ChatAction.reply,
+                            state.initiateChatActionId == 'reply_${support.id}',
                         builder: (context, isLoading) {
                           if (isLoading) {
                             return SizedBox(
@@ -678,18 +692,19 @@ class _InboxScreenState extends State<InboxScreen> {
     );
   }
 
-  Widget _buildUpdateCard(UpdateEntity update) {
+  Widget _buildUpdateCard(UpdateModel update) {
     Color themeColor = update.tag == 'Security'
         ? Colors.red
         : const Color(0xFF63D098);
-
-    return InkWell(
-      onTap: () {
-        if (!update.isRead) {
-          context.read<InboxCubit>().markInboxItem(update.id.toString(), false);
-        }
-      },
-      borderRadius: BorderRadius.circular(24),
+    final isReaded = !update.isRead!;
+    return GestureDetector(
+      onTap: update.isRead == true
+          ? null
+          : () {
+              if (update.id != null) {
+                context.read<InboxCubit>().markInboxAsRead(update.id!);
+              }
+            },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
@@ -755,7 +770,7 @@ class _InboxScreenState extends State<InboxScreen> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        update.title,
+                                        update.title ?? '',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w800,
                                           fontSize: 18,
@@ -764,9 +779,8 @@ class _InboxScreenState extends State<InboxScreen> {
                                         ),
                                       ),
                                     ),
-                                    Visibility(
-                                      visible: !update.isRead,
-                                      child: const Padding(
+                                    if (isReaded)
+                                      const Padding(
                                         padding: EdgeInsets.only(top: 8.0),
                                         child: Icon(
                                           Icons.circle,
@@ -774,13 +788,12 @@ class _InboxScreenState extends State<InboxScreen> {
                                           color: Color(0xFF4A69BD),
                                         ),
                                       ),
-                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
                                 // Description text
                                 Text(
-                                  update.description,
+                                  update.description ?? '',
                                   style: const TextStyle(
                                     color: Color(0xFF9094A0),
                                     fontSize: 15,
@@ -797,7 +810,9 @@ class _InboxScreenState extends State<InboxScreen> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      _formatDate(update.createdAt),
+                                      _formatDate(
+                                        update.createdAt ?? DateTime.now(),
+                                      ),
                                       style: const TextStyle(
                                         color: Color(0xFFB0B4C0),
                                         fontSize: 14,
@@ -826,7 +841,7 @@ class _InboxScreenState extends State<InboxScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              update.tag,
+                              update.tag ?? '',
                               style: TextStyle(
                                 color: themeColor,
                                 fontWeight: FontWeight.w600,
@@ -848,56 +863,60 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return ListView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.primaryLight,
-                child: Icon(
-                  Icons.mark_email_unread_outlined,
-                  color: AppColors.primary,
-                  size: 30,
+        const SizedBox(height: 140),
+        Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-              SizedBox(height: 14),
-              Text(
-                "No messages yet",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2937),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primaryLight,
+                  child: Icon(
+                    Icons.mark_email_unread_outlined,
+                    color: AppColors.primary,
+                    size: 30,
+                  ),
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                "You're all caught up. Pull down to refresh and check for new updates.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.4,
-                  color: AppColors.subTitleColor,
-                  fontWeight: FontWeight.w500,
+                SizedBox(height: 14),
+                Text(
+                  "No messages yet",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 8),
+                Text(
+                  "You're all caught up. Pull down to refresh and check for new updates.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: AppColors.subTitleColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

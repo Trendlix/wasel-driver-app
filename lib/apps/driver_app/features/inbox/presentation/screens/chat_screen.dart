@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
+import 'package:wasel_driver/apps/core/widgets/error_retry_widget.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/chat_messages_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ticket_status_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/presentation/manager/inbox_cubit.dart';
@@ -20,32 +21,25 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
-
-  // تأكد أن هذه القيم يتم تمريرها بشكل صحيح من الـ Cubit أو الـ Auth
-  int senderId = 1;
-  String senderType = 'user';
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    context.read<InboxCubit>().getChatMessages(widget.ticket.conversationId);
+    context.read<InboxCubit>().getChatMessages(int.parse(widget.ticketId));
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _handleSend() {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
-      context.read<InboxCubit>().sendMessage(
-        widget.ticket.conversationId,
-        senderId,
-        text,
-        senderType,
-      );
+      context.read<InboxCubit>().sendMessage(int.parse(widget.ticketId), text);
       _messageController.clear();
     }
   }
@@ -65,8 +59,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   return _buildChatShimmer();
                 } else if (state.getChatMessagesRequestStatus ==
                     RequestStatus.error) {
-                  return Center(
-                    child: Text(state.getChatMessagesErrorMessage ?? "Error"),
+                  return ErrorRetryWidget(
+                    message:
+                        state.getChatMessagesErrorMessage ??
+                        'Could not load messages. Check your connection and try again.',
+                    onRetry: () => context.read<InboxCubit>().getChatMessages(
+                      int.parse(widget.ticketId),
+                    ),
                   );
                 }
 
@@ -77,6 +76,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     state.sendMessageRequestStatus == RequestStatus.error;
 
                 return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length + (isSending || hasError ? 1 : 0),
                   itemBuilder: (context, index) {
@@ -90,8 +91,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       );
                     }
 
-                    final message = messages[index];
-                    bool isMe = message.senderType == 'user';
+                    final message = messages[messages.length - 1 - index];
+                    bool isMe = message.senderType == 'driver';
                     return _buildMessageBubble(message, isMe);
                   },
                 );
@@ -154,10 +155,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   const Spacer(),
                   GestureDetector(
                     onTap: () => context.read<InboxCubit>().sendMessage(
-                      widget.ticket.conversationId,
-                      senderId,
+                      int.parse(widget.ticketId),
                       content,
-                      senderType,
                     ),
                     child: const Icon(
                       Icons.refresh,
@@ -245,6 +244,23 @@ class _ChatScreenState extends State<ChatScreen> {
                 fontSize: 14,
               ),
             ),
+            if (isMe) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    message.isRead == true ? '✓✓' : '✓',
+                    style: TextStyle(
+                      color: message.isRead == true
+                          ? Colors.blue[300]
+                          : Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

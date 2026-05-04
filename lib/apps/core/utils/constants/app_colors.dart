@@ -21,6 +21,8 @@ class AppColors {
   static const Color profileSubTitle = Color(0xFF6A7282);
   static const Color noteCardColor = Color.fromARGB(255, 238, 245, 255);
   static const Color greenColor = Color(0xFF14C38E);
+  static const Color greenLight = Color(0xFFDCFCE7);
+  static const Color green = Color(0xFF008236);
 }
 
 class AppTextStyles {

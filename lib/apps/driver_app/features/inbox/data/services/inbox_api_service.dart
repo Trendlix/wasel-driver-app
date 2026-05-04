@@ -20,6 +20,8 @@ abstract class InboxApiService {
     int page,
     int limit,
   );
+  Future<Either<String, bool>> markAllInboxAsRead(InboxStatus status);
+  Future<Either<String, bool>> markInboxAsRead(int ticketId);
 
   Future<Either<String, TicketStatusModel>> initiateChat(
     int ticketId,
@@ -30,15 +32,5 @@ abstract class InboxApiService {
     int conversationId,
   );
 
-  Future<Either<String, bool>> sendMessage(
-    int conversationId,
-    int senderId,
-    String message,
-    String senderType,
-  );
-
-  Future<Either<String, bool>> markInboxItem(
-    String inboxItemId,
-    bool isSupport,
-  );
+  Future<Either<String, bool>> sendMessage(int ticketId, String message);
 }

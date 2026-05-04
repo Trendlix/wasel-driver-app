@@ -1,12 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wasel_driver/apps/core/enums/app_enums.dart';
 import 'package:wasel_driver/apps/core/enums/request_status.dart';
-import 'package:wasel_driver/apps/driver_app/features/inbox/data/model/inbox_model.dart';
-import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/ibox_entity.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/domain/entity/chat_messages_entity.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_chat_messages_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/get_inbox_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/initate_chat_usecase.dart';
-import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/mark_inbox_item_usecase.dart';
+import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/mark_inboxes_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/domain/usecases/send_message_usecase.dart';
 import 'package:wasel_driver/apps/driver_app/features/inbox/presentation/manager/inbox_states.dart';
 
@@ -17,7 +16,8 @@ class InboxCubit extends Cubit<InboxStates> {
   final InitateChatUsecase _initateChatUsecase;
   final GetChatMessagesUsecase _getChatMessagesUsecase;
   final SendMessageUsecase _sendMessageUsecase;
-  final MarkInboxItemUsecase _markInboxItemUsecase;
+  final MarkAllInboxesUsecase _markAllInboxesUsecase;
+  final MarkInboxAsReadUsecase _markInboxAsReadUsecase;
   InboxCubit(
     this._getOffersInboxUsecase,
     this._getUpdatesInboxUsecase,
@@ -25,138 +25,157 @@ class InboxCubit extends Cubit<InboxStates> {
     this._initateChatUsecase,
     this._getChatMessagesUsecase,
     this._sendMessageUsecase,
-    this._markInboxItemUsecase,
+    this._markAllInboxesUsecase,
+    this._markInboxAsReadUsecase,
   ) : super(const InboxStates());
 
-  Future<void> getOffersInbox(InboxStatus status, int page, int limit) async {
-    if (page == 1) {
+  Future<void> getOffersInbox(
+    InboxStatus status, {
+    int limit = 10,
+    bool isLoadMore = false,
+  }) async {
+    if (isLoadMore) {
+      if (state.isLoadingMore || !state.offersHasMore) return;
+      emit(state.copyWith(isLoadingMore: true));
+    } else {
       emit(
         state.copyWith(
           getInboxRequestStatus: RequestStatus.loading,
-          getMoreInboxRequestStatus: RequestStatus.initial,
           offersPage: 1,
           offersHasMore: true,
         ),
       );
-    } else {
-      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
     }
 
-    final result = await _getOffersInboxUsecase(status, page, limit);
-    if (isClosed) return;
+    final nextPage = isLoadMore ? state.offersPage + 1 : 1;
+    final result = await _getOffersInboxUsecase(status, nextPage, limit);
     result.fold(
-      (error) => emit(
-        state.copyWith(
-          getInboxRequestStatus: page == 1
-              ? RequestStatus.error
-              : state.getInboxRequestStatus,
-          getMoreInboxRequestStatus: page > 1
-              ? RequestStatus.error
-              : state.getMoreInboxRequestStatus,
-          getInboxErrorMessage: error,
-        ),
-      ),
+      (error) {
+        if (isLoadMore) {
+          emit(state.copyWith(isLoadingMore: false));
+        } else {
+          emit(
+            state.copyWith(
+              getInboxRequestStatus: RequestStatus.error,
+              getInboxErrorMessage: error,
+              isLoadingMore: false,
+            ),
+          );
+        }
+      },
       (offers) {
-        final List<OfferEntity> updatedOffers = page == 1
-            ? offers
-            : [...(state.offers ?? []), ...offers];
+        final mergedOffers = isLoadMore
+            ? [...?state.offers, ...offers]
+            : offers;
         emit(
           state.copyWith(
             getInboxRequestStatus: RequestStatus.success,
-            getMoreInboxRequestStatus: RequestStatus.success,
-            offers: updatedOffers,
-            offersPage: page,
+            offers: mergedOffers,
+            offersPage: nextPage,
             offersHasMore: offers.length == limit,
+            isLoadingMore: false,
           ),
         );
       },
     );
   }
 
-  Future<void> getUpdatesInbox(InboxStatus status, int page, int limit) async {
-    if (page == 1) {
+  Future<void> getUpdatesInbox(
+    InboxStatus status, {
+    int limit = 10,
+    bool isLoadMore = false,
+  }) async {
+    if (isLoadMore) {
+      if (state.isLoadingMore || !state.updatesHasMore) return;
+      emit(state.copyWith(isLoadingMore: true));
+    } else {
       emit(
         state.copyWith(
           getInboxRequestStatus: RequestStatus.loading,
-          getMoreInboxRequestStatus: RequestStatus.initial,
           updatesPage: 1,
           updatesHasMore: true,
         ),
       );
-    } else {
-      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
     }
 
-    final result = await _getUpdatesInboxUsecase(status, page, limit);
-    if (isClosed) return;
+    final nextPage = isLoadMore ? state.updatesPage + 1 : 1;
+    final result = await _getUpdatesInboxUsecase(status, nextPage, limit);
     result.fold(
-      (error) => emit(
-        state.copyWith(
-          getInboxRequestStatus: page == 1
-              ? RequestStatus.error
-              : state.getInboxRequestStatus,
-          getMoreInboxRequestStatus: page > 1
-              ? RequestStatus.error
-              : state.getMoreInboxRequestStatus,
-          getInboxErrorMessage: error,
-        ),
-      ),
+      (error) {
+        if (isLoadMore) {
+          emit(state.copyWith(isLoadingMore: false));
+        } else {
+          emit(
+            state.copyWith(
+              getInboxRequestStatus: RequestStatus.error,
+              getInboxErrorMessage: error,
+              isLoadingMore: false,
+            ),
+          );
+        }
+      },
       (updates) {
-        final List<UpdateEntity> updatedUpdates = page == 1
-            ? updates
-            : [...(state.updates ?? []), ...updates];
+        final mergedUpdates = isLoadMore
+            ? [...?state.updates, ...updates]
+            : updates;
         emit(
           state.copyWith(
             getInboxRequestStatus: RequestStatus.success,
-            getMoreInboxRequestStatus: RequestStatus.success,
-            updates: updatedUpdates,
-            updatesPage: page,
+            updates: mergedUpdates,
+            updatesPage: nextPage,
             updatesHasMore: updates.length == limit,
+            isLoadingMore: false,
           ),
         );
       },
     );
   }
 
-  Future<void> getSupportInbox(InboxStatus status, int page, int limit) async {
-    if (page == 1) {
+  Future<void> getSupportInbox(
+    InboxStatus status, {
+    int limit = 10,
+    bool isLoadMore = false,
+  }) async {
+    if (isLoadMore) {
+      if (state.isLoadingMore || !state.supportsHasMore) return;
+      emit(state.copyWith(isLoadingMore: true));
+    } else {
       emit(
         state.copyWith(
           getInboxRequestStatus: RequestStatus.loading,
-          getMoreInboxRequestStatus: RequestStatus.initial,
           supportsPage: 1,
           supportsHasMore: true,
         ),
       );
-    } else {
-      emit(state.copyWith(getMoreInboxRequestStatus: RequestStatus.loading));
     }
 
-    final result = await _getSupportInboxUsecase(status, page, limit);
-    if (isClosed) return;
+    final nextPage = isLoadMore ? state.supportsPage + 1 : 1;
+    final result = await _getSupportInboxUsecase(status, nextPage, limit);
     result.fold(
-      (error) => emit(
-        state.copyWith(
-          getInboxRequestStatus: page == 1
-              ? RequestStatus.error
-              : state.getInboxRequestStatus,
-          getMoreInboxRequestStatus: page > 1
-              ? RequestStatus.error
-              : state.getMoreInboxRequestStatus,
-          getInboxErrorMessage: error,
-        ),
-      ),
+      (error) {
+        if (isLoadMore) {
+          emit(state.copyWith(isLoadingMore: false));
+        } else {
+          emit(
+            state.copyWith(
+              getInboxRequestStatus: RequestStatus.error,
+              getInboxErrorMessage: error,
+              isLoadingMore: false,
+            ),
+          );
+        }
+      },
       (supports) {
-        final List<SupportEntity> updatedSupports = page == 1
-            ? supports
-            : [...(state.supports ?? []), ...supports];
+        final mergedSupports = isLoadMore
+            ? [...?state.supports, ...supports]
+            : supports;
         emit(
           state.copyWith(
             getInboxRequestStatus: RequestStatus.success,
-            getMoreInboxRequestStatus: RequestStatus.success,
-            supports: updatedSupports,
-            supportsPage: page,
+            supports: mergedSupports,
+            supportsPage: nextPage,
             supportsHasMore: supports.length == limit,
+            isLoadingMore: false,
           ),
         );
       },
@@ -165,37 +184,30 @@ class InboxCubit extends Cubit<InboxStates> {
 
   Future<void> initiateChat(
     int ticketId,
-    int userId,
-    ChatAction action,
-    int? inboxItemId,
-  ) async {
+    int userId, {
+    String? actionId,
+  }) async {
     emit(
       state.copyWith(
         initiateChatRequestStatus: RequestStatus.loading,
         ticketId: ticketId,
-        loadingInboxId: inboxItemId,
-        chatAction: action,
+        initiateChatActionId: actionId,
       ),
     );
     final result = await _initateChatUsecase(ticketId, userId);
-    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
           initiateChatRequestStatus: RequestStatus.error,
           initiateChatErrorMessage: error,
-          ticketId: -1,
-          loadingInboxId: -1,
-          chatAction: null,
+          ticketId: null,
         ),
       ),
       (ticketStatusEntity) => emit(
         state.copyWith(
           initiateChatRequestStatus: RequestStatus.success,
           ticketStatusEntity: ticketStatusEntity,
-          ticketId: -1,
-          loadingInboxId: -1,
-          chatAction: null,
+          ticketId: null,
         ),
       ),
     );
@@ -204,7 +216,6 @@ class InboxCubit extends Cubit<InboxStates> {
   Future<void> getChatMessages(int conversationId) async {
     emit(state.copyWith(getChatMessagesRequestStatus: RequestStatus.loading));
     final result = await _getChatMessagesUsecase(conversationId);
-    if (isClosed) return;
     result.fold(
       (error) => emit(
         state.copyWith(
@@ -221,33 +232,43 @@ class InboxCubit extends Cubit<InboxStates> {
     );
   }
 
-  Future<void> sendMessage(
-    int conversationId,
-    int senderId,
-    String message,
-    String senderType,
-  ) async {
+  Future<void> sendMessage(int ticketId, String message) async {
+    // Add message optimistically to the list
+    final currentMessages = state.chatMessages ?? [];
+    final optimisticMessage = ChatMessagesEntity(
+      id: DateTime.now().millisecondsSinceEpoch,
+      senderId: 0,
+      senderType: 'driver',
+      content: message,
+      attachments: [],
+      attachmentUrls: [],
+      createdAt: DateTime.now(),
+      isRead: false,
+    );
+    final updatedMessages = [...currentMessages, optimisticMessage];
+
     emit(
       state.copyWith(
         sendMessageRequestStatus: RequestStatus.loading,
         lastSentMessage: message,
+        chatMessages: updatedMessages,
       ),
     );
-    final result = await _sendMessageUsecase(
-      conversationId,
-      senderId,
-      message,
-      senderType,
-    );
-    if (isClosed) return;
+
+    final result = await _sendMessageUsecase(ticketId, message);
     result.fold(
-      (error) => emit(
-        state.copyWith(
-          sendMessageRequestStatus: RequestStatus.error,
-          sendMessageErrorMessage: error,
-          lastSentMessage: error,
-        ),
-      ),
+      (error) {
+        // Remove optimistic message on error
+        final messagesWithoutOptimistic = currentMessages;
+        emit(
+          state.copyWith(
+            sendMessageRequestStatus: RequestStatus.error,
+            sendMessageErrorMessage: error,
+            lastSentMessage: message,
+            chatMessages: messagesWithoutOptimistic,
+          ),
+        );
+      },
       (isSent) {
         emit(
           state.copyWith(
@@ -255,44 +276,52 @@ class InboxCubit extends Cubit<InboxStates> {
             lastSentMessage: null,
           ),
         );
-        // Refresh messages to get the real one from DB
-        getChatMessages(conversationId);
+        // Keep the optimistic message - no refresh needed like WhatsApp
       },
     );
   }
 
-  Future<void> markInboxItem(String inboxItemId, bool isSupport) async {
-    emit(state.copyWith(markInboxItemRequestStatus: RequestStatus.loading));
-    final result = await _markInboxItemUsecase(inboxItemId, isSupport);
-    if (isClosed) return;
+  Future<void> markAllInboxes(InboxStatus status) async {
+    emit(state.copyWith(markAllInboxesRequestStatus: RequestStatus.loading));
+    final result = await _markAllInboxesUsecase(status);
     result.fold(
       (error) => emit(
         state.copyWith(
-          markInboxItemRequestStatus: RequestStatus.error,
-          markInboxItemErrorMessage: error,
+          markAllInboxesRequestStatus: RequestStatus.error,
+          markAllInboxesErrorMessage: error,
         ),
       ),
       (isMarked) => emit(
-        state.copyWith(
-          markInboxItemRequestStatus: RequestStatus.success,
-          markInboxItemErrorMessage: null,
-        ),
+        state.copyWith(markAllInboxesRequestStatus: RequestStatus.success),
       ),
     );
   }
 
-  void resetMarkInboxItemStatus() {
-    emit(state.copyWith(markInboxItemRequestStatus: RequestStatus.initial));
+  Future<void> markInboxAsRead(int ticketId) async {
+    emit(state.copyWith(markInboxAsReadRequestStatus: RequestStatus.loading));
+    final result = await _markInboxAsReadUsecase(ticketId);
+    result.fold(
+      (error) => emit(
+        state.copyWith(
+          markInboxAsReadRequestStatus: RequestStatus.error,
+          markInboxAsReadErrorMessage: error,
+        ),
+      ),
+      (isMarked) => emit(
+        state.copyWith(markInboxAsReadRequestStatus: RequestStatus.success),
+      ),
+    );
   }
 
   void resetInitiateChatStatus() {
-    emit(
-      state.copyWith(
-        initiateChatRequestStatus: RequestStatus.initial,
-        ticketId: -1,
-        loadingInboxId: -1,
-        chatAction: null,
-      ),
-    );
+    emit(state.copyWith(initiateChatRequestStatus: RequestStatus.initial));
+  }
+
+  void resetMarkAllInboxesStatus() {
+    emit(state.copyWith(markAllInboxesRequestStatus: RequestStatus.initial));
+  }
+
+  void resetMarkInboxAsReadStatus() {
+    emit(state.copyWith(markInboxAsReadRequestStatus: RequestStatus.initial));
   }
 }
